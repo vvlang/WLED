@@ -566,6 +566,14 @@ public:
       uniformColor = getColorForProgress(progressPercent);
     }
 
+    // 多色渐变模式：当进度完成（100%）时，所有激活的LED显示同一个颜色（最后一个颜色点）
+    bool isComplete = (progressPercent >= 100);
+    uint32_t completeColor = progressColor;
+    if (isComplete && useMultiColor && !useUniformColor) {
+      // 使用最后一个颜色点作为完成颜色
+      completeColor = colorPoints[numColorPoints - 1];
+    }
+
     if (direction == 0) {
       // 正向：从左到右
       for (uint16_t i = 0; i < totalLEDs; i++) {
@@ -574,6 +582,9 @@ public:
           if (useUniformColor) {
             // 整体变色模式：所有LED显示相同颜色
             pixelColor = uniformColor;
+          } else if (isComplete && useMultiColor) {
+            // 进度完成时：所有LED显示同一个颜色
+            pixelColor = completeColor;
           } else if (useMultiColor && activeLEDs > 0) {
             // 多色渐变模式：根据LED在进度条中的位置计算颜色（从0%到当前进度%的渐变）
             int pixelPercent = (i * 100) / activeLEDs;
@@ -597,6 +608,9 @@ public:
           if (useUniformColor) {
             // 整体变色模式：所有LED显示相同颜色
             pixelColor = uniformColor;
+          } else if (isComplete && useMultiColor) {
+            // 进度完成时：所有LED显示同一个颜色
+            pixelColor = completeColor;
           } else if (useMultiColor && activeLEDs > 0) {
             // 多色渐变模式：根据LED在进度条中的位置计算颜色
             uint16_t posInProgress = totalLEDs - i - 1;
@@ -621,6 +635,9 @@ public:
           if (useUniformColor) {
             // 整体变色模式：所有LED显示相同颜色
             pixelColor = uniformColor;
+          } else if (isComplete && useMultiColor) {
+            // 进度完成时：所有LED显示同一个颜色
+            pixelColor = completeColor;
           } else if (useMultiColor && halfActive > 0) {
             // 多色渐变模式：根据距离中心的距离计算颜色
             int pixelPercent = ((halfActive - distanceFromCenter) * 100) / halfActive;
