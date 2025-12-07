@@ -586,9 +586,10 @@ public:
             // 进度完成时：所有LED显示同一个颜色
             pixelColor = completeColor;
           } else if (useMultiColor && activeLEDs > 0) {
-            // 多色渐变模式：根据LED在进度条中的位置计算颜色（从0%到当前进度%的渐变）
-            int pixelPercent = (i * 100) / activeLEDs;
-            pixelPercent = constrain(pixelPercent, 0, 100);
+            // 多色渐变模式：根据LED在进度条中的位置计算颜色
+            // 将LED位置映射到当前进度百分比范围内（0%到当前进度%）
+            int pixelPercent = (i * progressPercent) / activeLEDs;
+            pixelPercent = constrain(pixelPercent, 0, progressPercent);
             pixelColor = getColorForProgress(pixelPercent);
           } else {
             pixelColor = progressColor;
@@ -614,8 +615,8 @@ public:
           } else if (useMultiColor && activeLEDs > 0) {
             // 多色渐变模式：根据LED在进度条中的位置计算颜色
             uint16_t posInProgress = totalLEDs - i - 1;
-            int pixelPercent = (posInProgress * 100) / activeLEDs;
-            pixelPercent = constrain(pixelPercent, 0, 100);
+            int pixelPercent = (posInProgress * progressPercent) / activeLEDs;
+            pixelPercent = constrain(pixelPercent, 0, progressPercent);
             pixelColor = getColorForProgress(pixelPercent);
           } else {
             pixelColor = progressColor;
@@ -640,8 +641,9 @@ public:
             pixelColor = completeColor;
           } else if (useMultiColor && halfActive > 0) {
             // 多色渐变模式：根据距离中心的距离计算颜色
-            int pixelPercent = ((halfActive - distanceFromCenter) * 100) / halfActive;
-            pixelPercent = constrain(pixelPercent, 0, 100);
+            // 将距离映射到当前进度百分比范围内（0%到当前进度%）
+            int pixelPercent = ((halfActive - distanceFromCenter) * progressPercent) / halfActive;
+            pixelPercent = constrain(pixelPercent, 0, progressPercent);
             pixelColor = getColorForProgress(pixelPercent);
           } else {
             pixelColor = progressColor;
