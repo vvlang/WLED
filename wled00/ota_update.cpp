@@ -759,7 +759,22 @@ static bool isAutoUpdateDownloading = false;
  * 从GitHub API获取最新release信息
  */
 bool checkAutoUpdate() {
-  if (isAutoUpdateChecking || !autoUpdateEnabled || !WLED_CONNECTED || otaLock) {
+  if (isAutoUpdateChecking) {
+    return false;
+  }
+  
+  if (!autoUpdateEnabled) {
+    strcpy_P(autoUpdateStatus, PSTR("自动更新未启用"));
+    return false;
+  }
+  
+  if (!WLED_CONNECTED) {
+    strcpy_P(autoUpdateStatus, PSTR("WiFi未连接"));
+    return false;
+  }
+  
+  if (otaLock) {
+    strcpy_P(autoUpdateStatus, PSTR("OTA已锁定"));
     return false;
   }
 
