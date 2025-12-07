@@ -11,16 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-        cache: 'pip'
-    - name: Install PlatformIO
-      run: pip install -r requirements.txt
-    - name: Get default environments
+    - name: Set environments to ESP32-C3 only
       id: envs
       run: |
-        echo "environments=$(pio project config --json-output | jq -cr '.[0][1][0][1]')" >> $GITHUB_OUTPUT
+        echo 'environments=["esp32c3dev"]' >> $GITHUB_OUTPUT
     outputs:
       environments: ${{ steps.envs.outputs.environments }}
 
