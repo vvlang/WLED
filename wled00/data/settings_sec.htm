@@ -115,9 +115,12 @@
 				}
 				
 				// /json/si 返回 {state: {...}, info: {...}}
-				// autoUpdate 在 info 对象中
+				// autoUpdate 在 state 对象中（serializeState函数中创建）
 				var autoUpdate = null;
-				if (obj.info && obj.info.autoUpdate) {
+				if (obj.state && obj.state.autoUpdate) {
+					autoUpdate = obj.state.autoUpdate;
+				} else if (obj.info && obj.info.autoUpdate) {
+					// 兼容info中的autoUpdate
 					autoUpdate = obj.info.autoUpdate;
 				} else if (obj.autoUpdate) {
 					// 兼容直接访问
