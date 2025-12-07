@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>WLED Pixel Art Converter</title>
+    <title>WLED 像素艺术转换器</title>
     <link rel="stylesheet" href="pixart.css">
     <link rel="shortcut icon" href="favicon-16x16.png">
     <script type="text/javascript">
@@ -24,27 +25,27 @@
               <rect style="fill:#003FFF" x="18" y="10" width="4" height="8"/>
               <rect style="fill:#003FFF" x="22" y="6" width="8" height="4"/>
             </svg>
-            WLED Pixel Art Converter
+            WLED 像素艺术转换器
           </h1>
         </div>
-        <h2>Convert image to WLED JSON (pixel art on WLED matrix)</h2>
+        <h2>将图像转换为WLED JSON（WLED矩阵上的像素艺术）</h2>
         <p>
           <table id="fieldTable"  style="width: 100%; table-layout: fixed; align-content: center;">
             <tr>
               <td style="vertical-align: middle;">
-                <label for="ledSetupSelector">Led setup:</label>
+                <label for="ledSetupSelector">LED设置:</label>
               </td>
               <td class="adaptiveTD">
                 <select id="ledSetupSelector" class="mainSelector">
-                  <option value="matrix" selected>2D Matrix</option>
-                  <option value="r2l">Serpentine, first row right to left &lt;-</option>
-                  <option value="l2r">Serpentine, first row left to right -&gt;</option>
+                  <option value="matrix" selected>2D 矩阵</option>
+                  <option value="r2l">蛇形，第一行从右到左 &lt;-</option>
+                  <option value="l2r">蛇形，第一行从左到右 -&gt;</option>
                 </select>
               </td>
             </tr>        
             <tr>
               <td style="vertical-align: middle;">
-                <label for="formatSelector">Output format:</label>
+                <label for="formatSelector">输出格式:</label>
               </td>
               <td class="adaptiveTD">
                 <select id="formatSelector" class="mainSelector">

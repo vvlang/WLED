@@ -1,0 +1,112 @@
+name: Auto Build Firmware
+
+on:
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'PlatformIO environment to build'
+        required: true
+        default: 'esp32c3dev'
+        type: choice
+        options:
+          - esp32c3dev
+          - esp32dev
+          - nodemcuv2
+          - esp8266_2m
+          - esp32_eth
+          - esp32_wrover
+          - lolin_s2_mini
+          - esp32S3_wroom2
+      build_web_ui:
+        description: 'Build web UI first'
+        required: true
+        default: true
+        type: boolean
+  # Push到main分支时自动编译esp32c3dev
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
+      - '.github/**'
+
+jobs:
+  build:
+    name: Build ${{ github.event.inputs.environment || 'esp32c3dev' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Update version
+        run: |
+          VERSION=`date +%y%m%d0`
+          sed -i -r -e "s/define VERSION .+/define VERSION $VERSION/" wled00/wled.h
+
+      - name: Build web UI
+        run: npm run build
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install PlatformIO
+        run: pip install -r requirements.txt
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio/.cache
+            ~/.buildcache
+            build_output
+          key: pio-${{ runner.os }}-${{ github.event.inputs.environment || 'esp32c3dev' }}-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-${{ hashFiles('wled00/**', 'usermods/**') }}
+          restore-keys: |
+            pio-${{ runner.os }}-${{ github.event.inputs.environment || 'esp32c3dev' }}-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-
+
+      - name: Build firmware
+        run: pio run -e ${{ github.event.inputs.environment || 'esp32c3dev' }}
+
+      - name: Upload firmware artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ github.event.inputs.environment || 'esp32c3dev' }}
+          path: |
+            build_output/release/*.bin
+          retention-days: 30
+
+      - name: Get firmware info
+        id: firmware_info
+        run: |
+          FIRMWARE_FILE=$(find build_output/release -name "*.bin" -type f | head -n 1)
+          if [ -n "$FIRMWARE_FILE" ]; then
+            FIRMWARE_SIZE=$(du -h "$FIRMWARE_FILE" | cut -f1)
+            echo "file=$FIRMWARE_FILE" >> $GITHUB_OUTPUT
+            echo "size=$FIRMWARE_SIZE" >> $GITHUB_OUTPUT
+            echo "name=$(basename $FIRMWARE_FILE)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build summary
+        run: |
+          echo "## 固件编译完成 ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**环境**: ${{ github.event.inputs.environment || 'esp32c3dev' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**固件文件**: ${{ steps.firmware_info.outputs.name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**文件大小**: ${{ steps.firmware_info.outputs.size }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "固件已上传为Artifact，可在Actions页面下载。" >> $GITHUB_STEP_SUMMARY
+

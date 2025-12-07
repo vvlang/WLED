@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>WLED Custom Palette Editor</title>
+    <title>WLED 自定义调色板编辑器</title>
     <script type="text/javascript">
       var d = document;
       function gId(e) {return d.getElementById(e);}
@@ -124,7 +125,7 @@
         <rect style="fill: #03F" x="18" y="10" width="4" height="8"/>
         <rect style="fill: #03F" x="22" y="6" width="8" height="4"/>
       </svg>
-      <span id="head">WLED Palette Editor</span>
+      <span id="head">WLED 调色板编辑器</span>
     </h1>
   </div>
 
@@ -133,17 +134,17 @@
     <div id="pals" class="pMain">
       <div id="distDiv" class="pTop"></div>
       <div id="memWarn" class="pTop" style="display:none; color:#ff6600; margin-bottom:8px; font-size:16px;">
-        Warning: Adding many custom palettes might cause stability issues, create <a href="/settings/sec#backup" style="color:#ff9900">backups</a> before proceeding.</div>
-      <div id="pTop" class="pTop">Custom palettes</div>
+        警告: 添加许多自定义调色板可能会导致稳定性问题，请先创建<a href="/settings/sec#backup" style="color:#ff9900">备份</a>。</div>
+      <div id="pTop" class="pTop">自定义调色板</div>
     </div>
   </div>
 
   <div style="display: flex; justify-content: center;">
-    <div id="info">Click gradient to add. Box = color. Red = delete. Arrow = upload. Pencil = edit.</div>
+    <div id="info">点击渐变添加。方框 = 颜色。红色 = 删除。箭头 = 上传。铅笔 = 编辑。</div>
   </div>
   <div style="display: flex; justify-content: center;">
     <div id="sPals" class="pMain">
-        <div id="spTop" class="pTop">Static palettes</div>
+        <div id="spTop" class="pTop">静态调色板</div>
     </div>
   </div>
 </body>
@@ -167,7 +168,7 @@
 
   const distDiv = gId("distDiv");
   distDiv.addEventListener('click', distrib);
-  distDiv.setAttribute('title', 'Distribute equally');
+  distDiv.setAttribute('title', '均匀分布');
   distDiv.innerHTML = svgDist;
 
   function recOf() {
@@ -466,7 +467,7 @@
 
     const wledPalx = JSON.parse(localStorage.getItem('wledPalx'));
     if (!wledPalx) {
-      alert("Palette cache missing from browser. Return to main page first.","Missing cache!")
+      alert("调色板缓存从浏览器中丢失。请先返回主页面。","缺少缓存！")
     } else {
       for (const key in wledPalx.p) {
         wledPalx.p[key].name = palNm[key];
@@ -543,15 +544,15 @@
       const sSpan = cE("span");
       sSpan.id = `s${i}`;
       sSpan.onclick = function() {initUpload(i)};
-      sSpan.setAttribute('title', `Send current editor to slot ${i}`); // perhaps Save instead of Send?
+      sSpan.setAttribute('title', `将当前编辑器发送到槽位 ${i}`); // perhaps Save instead of Send?
       sSpan.innerHTML = svgSave;
       sSpan.classList.add("sSpan")
       const eSpan = cE("span");
       eSpan.id = `e${i}`;
       eSpan.onclick = function() {loadEdit(i)};
-      eSpan.setAttribute('title', `Copy slot ${i} to editor`);
+      eSpan.setAttribute('title', `复制槽位 ${i} 到编辑器`);
       if (palArr[i].name) {
-        eSpan.setAttribute('title', `Copy ${palArr[i].name} to editor`);
+        eSpan.setAttribute('title', `复制 ${palArr[i].name} 到编辑器`);
       }
       eSpan.innerHTML = svgEdit;
       eSpan.classList.add("eSpan")

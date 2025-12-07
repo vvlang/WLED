@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="author" content="@ajotanc" />
 
-    <title>Pixel Magic Tool</title>
+    <title>像素魔法工具</title>
 
     <style>
       :root {
@@ -570,45 +570,45 @@
         <form id="formGenerate" novalidate>
           <div class="header">
             <span class="title"
-              >PIXEL <span class="rainbow">MAGIC</span> TOOL</span
+              >像素 <span class="rainbow">魔法</span> 工具</span
             >
             <span class="subtitle"
-              >It is a tool that converts any image into code in
-              <strong>JSON WLED</strong> format for
-              <strong>2D Matrix</strong> panels</span
+              >这是一个将任何图像转换为
+              <strong>JSON WLED</strong> 格式代码的工具，用于
+              <strong>2D 矩阵</strong> 面板</span
             >
           </div>
           <div class="row">
             <div class="col" validate>
-              <label for="hostname">Hostname</label>
+              <label for="hostname">主机名</label>
               <input type="text" name="hostname" id="hostname" required />
             </div>
             <div class="col" validate>
-              <label for="name">Preset Name</label>
+              <label for="name">预设名称</label>
               <input
                 type="text"
                 name="name"
                 id="name"
-                value="New Preset"
+                value="新预设"
                 required />
             </div>
           </div>
           <div class="row">
             <div class="col" validate>
               <div class="custom-select">
-                <label for="pattern">Pattern</label>
+                <label for="pattern">模式</label>
                 <select name="pattern" id="pattern" required>
-                  <option value="1" title="['ffffff']">Individual</option>
-                  <option value="2" title="[0, 'ffffff']">Index</option>
+                  <option value="1" title="['ffffff']">单独</option>
+                  <option value="2" title="[0, 'ffffff']">索引</option>
                   <option value="3" title="[0, 5, 'ffffff']" selected>
-                    Range
+                    范围
                   </option>
                 </select>
               </div>
             </div>
             <div class="col" validate>
               <div class="custom-select">
-                <label for="output">Output</label>
+                <label for="output">输出</label>
                 <select name="output" id="output" required>
                   <option value="json" selected>WLED JSON</option>
                   <option value="ha">Home Assistant</option>
@@ -837,7 +837,7 @@
       </div>
       <footer>
         <a href="https://github.com/ajotanc/PixelMagicTool" target="_blank">
-          Github &copy; Pixel Magic Tool
+          Github &copy; 像素魔法工具
         </a>
       </footer>
     </div>
