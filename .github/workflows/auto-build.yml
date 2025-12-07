@@ -152,43 +152,39 @@ jobs:
           COMMIT_MSG="${{ github.event.head_commit.message || 'Auto build' }}"
           TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
           
+          # 使用临时文件构建body，避免heredoc问题
+          TEMP_BODY=$(mktemp)
+          
           if [ "${{ steps.check_release.outputs.exists }}" == "true" ]; then
             EXISTING_BODY="${{ steps.existing_body.outputs.body }}"
-            {
-              echo 'body<<RELEASE_BODY_EOF'
-              echo "$EXISTING_BODY"
-              echo ""
-              echo "### ${ENV_NAME}"
-              echo "- **编译时间**: ${TIMESTAMP}"
-              echo "- **提交**: \`${COMMIT_SHA}\`"
-              echo "- **提交信息**: ${COMMIT_MSG}"
-              echo 'RELEASE_BODY_EOF'
-            } >> $GITHUB_OUTPUT
+            printf "%s\n\n" "${EXISTING_BODY}" > "${TEMP_BODY}"
+            printf "### %s\n" "${ENV_NAME}" >> "${TEMP_BODY}"
+            printf "- **编译时间**: %s\n" "${TIMESTAMP}" >> "${TEMP_BODY}"
+            printf "- **提交**: \`%s\`\n" "${COMMIT_SHA}" >> "${TEMP_BODY}"
+            printf "- **提交信息**: %s\n" "${COMMIT_MSG}" >> "${TEMP_BODY}"
           else
-            {
-              echo 'body<<RELEASE_BODY_EOF'
-              echo "## WLED 固件发布"
-              echo ""
-              echo "**版本号**: \`${VERSION}\`"
-              echo "**编译时间**: ${TIMESTAMP}"
-              echo ""
-              echo "## 支持的平台"
-              echo ""
-              echo "### ${ENV_NAME}"
-              echo "- **编译时间**: ${TIMESTAMP}"
-              echo "- **提交**: \`${COMMIT_SHA}\`"
-              echo "- **提交信息**: ${COMMIT_MSG}"
-              echo ""
-              echo "## 下载"
-              echo ""
-              echo "请下载对应您设备平台的固件文件。"
-              echo ""
-              echo "---"
-              echo ""
-              echo "*此版本由GitHub Actions自动编译生成*"
-              echo 'RELEASE_BODY_EOF'
-            } >> $GITHUB_OUTPUT
+            printf "## WLED 固件发布\n\n" > "${TEMP_BODY}"
+            printf "**版本号**: \`%s\`\n" "${VERSION}" >> "${TEMP_BODY}"
+            printf "**编译时间**: %s\n\n" "${TIMESTAMP}" >> "${TEMP_BODY}"
+            printf "## 支持的平台\n\n" >> "${TEMP_BODY}"
+            printf "### %s\n" "${ENV_NAME}" >> "${TEMP_BODY}"
+            printf "- **编译时间**: %s\n" "${TIMESTAMP}" >> "${TEMP_BODY}"
+            printf "- **提交**: \`%s\`\n" "${COMMIT_SHA}" >> "${TEMP_BODY}"
+            printf "- **提交信息**: %s\n\n" "${COMMIT_MSG}" >> "${TEMP_BODY}"
+            printf "## 下载\n\n" >> "${TEMP_BODY}"
+            printf "请下载对应您设备平台的固件文件。\n\n" >> "${TEMP_BODY}"
+            printf "---\n\n" >> "${TEMP_BODY}"
+            printf "*此版本由GitHub Actions自动编译生成*\n" >> "${TEMP_BODY}"
           fi
+          
+          # 使用heredoc输出到GITHUB_OUTPUT
+          {
+            echo 'body<<RELEASE_BODY_EOF'
+            cat "${TEMP_BODY}"
+            echo 'RELEASE_BODY_EOF'
+          } >> $GITHUB_OUTPUT
+          
+          rm -f "${TEMP_BODY}"
 
       - name: List firmware files
         run: |
