@@ -22,8 +22,12 @@ private:
   uint16_t updateInterval = 5000;     // 更新间隔（毫秒）
   int progressPercent = 0;            // 当前进度百分比
   int direction = 0;                  // 显示方向：0=正向, 1=反向, 2=中心扩散
-  uint32_t progressColor = 0x00FF00;  // 进度条颜色（默认绿色）
+  uint32_t progressColor = 0x00FF00;  // 进度条颜色（默认绿色）- 单色模式使用
   uint32_t bgColor = 0x000000;        // 背景颜色（默认黑色）
+  bool useMultiColor = false;         // 是否使用多色模式
+  uint32_t colorPoints[5] = {0xFF0000, 0xFFFF00, 0x00FF00, 0x00FFFF, 0x0000FF}; // 多色模式颜色点（红-黄-绿-青-蓝）
+  uint8_t colorThresholds[5] = {0, 25, 50, 75, 100}; // 每个颜色对应的百分比阈值
+  uint8_t numColorPoints = 5;         // 实际使用的颜色点数量
   float minValue = 0.0f;              // 最小值（用于百分比计算）
   float maxValue = 100.0f;            // 最大值（用于百分比计算）
   String statePath = F("state");     // JSON路径，默认为"state"
@@ -216,6 +220,7 @@ public:
     usermod["enabled"] = enabled;
     usermod["progress"] = progressPercent;
     usermod["entity"] = entityId;
+    usermod["use-multi-color"] = useMultiColor;
     if (strlen(errorMessage) > 0) {
       usermod["error"] = errorMessage;
     }
@@ -247,6 +252,19 @@ public:
     top["max-value"] = maxValue;
     top["use-attributes"] = useAttributes;
     top["attribute-key"] = attributeKey;
+    top["use-multi-color"] = useMultiColor;
+    top["num-color-points"] = numColorPoints;
+    
+    // 保存颜色点和阈值数组
+    JsonArray colorArray = top.createNestedArray("color-points");
+    for (uint8_t i = 0; i < numColorPoints; i++) {
+      colorArray.add(colorPoints[i]);
+    }
+    
+    JsonArray thresholdArray = top.createNestedArray("color-thresholds");
+    for (uint8_t i = 0; i < numColorPoints; i++) {
+      thresholdArray.add(colorThresholds[i]);
+    }
   }
 
   bool readFromConfig(JsonObject& root) override {
@@ -268,6 +286,43 @@ public:
       getJsonValue(top["max-value"], maxValue, 100.0f);
       getJsonValue(top["use-attributes"], useAttributes, false);
       getJsonValue(top["attribute-key"], attributeKey);
+      getJsonValue(top["use-multi-color"], useMultiColor, false);
+      
+      // 读取颜色点数量
+      uint8_t newNumColorPoints = numColorPoints;
+      getJsonValue(top["num-color-points"], newNumColorPoints, 5);
+      numColorPoints = constrain(newNumColorPoints, 1, 5);
+      
+      // 读取颜色点数组
+      JsonArray colorArray = top["color-points"];
+      if (!colorArray.isNull()) {
+        uint8_t count = min((uint8_t)colorArray.size(), (uint8_t)5);
+        for (uint8_t i = 0; i < count; i++) {
+          if (colorArray[i].is<uint32_t>()) {
+            colorPoints[i] = colorArray[i].as<uint32_t>();
+          } else if (colorArray[i].is<String>()) {
+            // 支持十六进制字符串格式
+            String hexStr = colorArray[i].as<String>();
+            colorPoints[i] = strtoul(hexStr.c_str(), NULL, 16);
+          }
+        }
+        numColorPoints = count;
+      }
+      
+      // 读取阈值数组
+      JsonArray thresholdArray = top["color-thresholds"];
+      if (!thresholdArray.isNull()) {
+        uint8_t count = min((uint8_t)thresholdArray.size(), (uint8_t)5);
+        for (uint8_t i = 0; i < count; i++) {
+          colorThresholds[i] = constrain(thresholdArray[i].as<uint8_t>(), 0, 100);
+        }
+        // 确保阈值是递增的
+        for (uint8_t i = 1; i < count; i++) {
+          if (colorThresholds[i] < colorThresholds[i-1]) {
+            colorThresholds[i] = colorThresholds[i-1];
+          }
+        }
+      }
     }
     
     return configComplete;
@@ -313,6 +368,50 @@ public:
     oappend(String(FPSTR(_name)).c_str()); 
     oappend(F(":max-value")); 
     oappend(F("',1,'<i>最大值（用于百分比计算）</i>');"));
+    
+    oappend(F("addInfo('")); 
+    oappend(String(FPSTR(_name)).c_str()); 
+    oappend(F(":use-multi-color")); 
+    oappend(F("',1,'<i>启用多色模式，根据进度显示不同颜色</i>');"));
+    
+    oappend(F("addInfo('")); 
+    oappend(String(FPSTR(_name)).c_str()); 
+    oappend(F(":num-color-points")); 
+    oappend(F("',1,'<i>颜色点数量（1-5）</i>');"));
+  }
+
+  /**
+   * 根据进度百分比获取颜色（多色模式）
+   */
+  uint32_t getColorForProgress(int percent) {
+    if (!useMultiColor) {
+      return progressColor;
+    }
+
+    // 确保百分比在有效范围内
+    percent = constrain(percent, 0, 100);
+
+    // 如果只有一个颜色点，直接返回
+    if (numColorPoints == 1) {
+      return colorPoints[0];
+    }
+
+    // 找到当前百分比所在的两个颜色点之间
+    for (uint8_t i = 0; i < numColorPoints - 1; i++) {
+      if (percent <= colorThresholds[i + 1]) {
+        // 计算在两个颜色点之间的插值
+        uint8_t range = colorThresholds[i + 1] - colorThresholds[i];
+        if (range == 0) {
+          return colorPoints[i];
+        }
+        uint8_t position = percent - colorThresholds[i];
+        uint8_t blend = (position * 255) / range;
+        return color_blend(colorPoints[i], colorPoints[i + 1], blend);
+      }
+    }
+
+    // 如果超过最后一个阈值，返回最后一个颜色
+    return colorPoints[numColorPoints - 1];
   }
 
   /**
@@ -328,7 +427,17 @@ public:
       // 正向：从左到右
       for (uint16_t i = 0; i < totalLEDs; i++) {
         if (i < activeLEDs) {
-          strip.setPixelColor(i, progressColor);
+          // 多色模式：根据LED在进度条中的位置计算颜色（从0%到当前进度%的渐变）
+          uint32_t pixelColor;
+          if (useMultiColor && activeLEDs > 0) {
+            // 计算这个LED在进度条中的相对位置（0-100%）
+            int pixelPercent = (i * 100) / activeLEDs;
+            pixelPercent = constrain(pixelPercent, 0, 100);
+            pixelColor = getColorForProgress(pixelPercent);
+          } else {
+            pixelColor = progressColor;
+          }
+          strip.setPixelColor(i, pixelColor);
         } else {
           strip.setPixelColor(i, bgColor);
         }
@@ -339,7 +448,18 @@ public:
         if (i < (totalLEDs - activeLEDs)) {
           strip.setPixelColor(i, bgColor);
         } else {
-          strip.setPixelColor(i, progressColor);
+          // 多色模式：根据LED在进度条中的位置计算颜色
+          uint32_t pixelColor;
+          if (useMultiColor && activeLEDs > 0) {
+            // 计算这个LED在进度条中的相对位置（从右到左，0%到当前进度%）
+            uint16_t posInProgress = totalLEDs - i - 1;
+            int pixelPercent = (posInProgress * 100) / activeLEDs;
+            pixelPercent = constrain(pixelPercent, 0, 100);
+            pixelColor = getColorForProgress(pixelPercent);
+          } else {
+            pixelColor = progressColor;
+          }
+          strip.setPixelColor(i, pixelColor);
         }
       }
     } else if (direction == 2) {
@@ -350,7 +470,18 @@ public:
       for (uint16_t i = 0; i < totalLEDs; i++) {
         uint16_t distanceFromCenter = abs((int16_t)i - (int16_t)center);
         if (distanceFromCenter < halfActive) {
-          strip.setPixelColor(i, progressColor);
+          // 多色模式：根据距离中心的距离计算颜色
+          uint32_t pixelColor;
+          if (useMultiColor && halfActive > 0) {
+            // 计算从中心到边缘的进度百分比
+            // 中心是100%，边缘是0%
+            int pixelPercent = ((halfActive - distanceFromCenter) * 100) / halfActive;
+            pixelPercent = constrain(pixelPercent, 0, 100);
+            pixelColor = getColorForProgress(pixelPercent);
+          } else {
+            pixelColor = progressColor;
+          }
+          strip.setPixelColor(i, pixelColor);
         } else {
           strip.setPixelColor(i, bgColor);
         }

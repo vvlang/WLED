@@ -11,7 +11,8 @@
   - 正向：从左到右填充
   - 反向：从右到左填充
   - 中心扩散：从中心向两边扩散
-- ✅ 可配置进度条颜色和背景颜色
+- ✅ **单色模式**：可配置进度条颜色和背景颜色
+- ✅ **多色模式**：根据进度百分比显示不同颜色，支持最多5个颜色点，自动颜色插值渐变
 - ✅ 支持自定义最小值和最大值范围
 - ✅ 支持从state或attributes中读取数据
 - ✅ 可配置更新间隔
@@ -55,8 +56,12 @@
   - `0`: 正向（从左到右）
   - `1`: 反向（从右到左）
   - `2`: 中心扩散
-- **progress-color**: 进度条颜色（十六进制，默认：0x00FF00，绿色）
+- **progress-color**: 进度条颜色（十六进制，默认：0x00FF00，绿色）- 单色模式使用
 - **bg-color**: 背景颜色（十六进制，默认：0x000000，黑色）
+- **use-multi-color**: 是否启用多色模式（默认：false）
+- **num-color-points**: 颜色点数量（1-5，默认：5）
+- **color-points**: 颜色点数组（十六进制颜色值数组）
+- **color-thresholds**: 颜色阈值数组（0-100的百分比数组，对应每个颜色的触发点）
 
 #### 数值范围设置
 
@@ -78,21 +83,36 @@
 
 ## 使用示例
 
-### 示例1：显示电池电量
+### 示例1：显示电池电量（单色模式）
 
 - **entity-id**: `sensor.phone_battery_level`
 - **min-value**: 0
 - **max-value**: 100
 - **direction**: 0（正向）
 - **progress-color**: 0x00FF00（绿色）
+- **use-multi-color**: false
 
-### 示例2：显示温度进度（20-30度范围）
+### 示例1b：显示电池电量（多色模式）
+
+- **entity-id**: `sensor.phone_battery_level`
+- **min-value**: 0
+- **max-value**: 100
+- **direction**: 0（正向）
+- **use-multi-color**: true
+- **num-color-points**: 3
+- **color-points**: [0xFF0000, 0xFFFF00, 0x00FF00]（红-黄-绿）
+- **color-thresholds**: [0, 50, 100]（0%红色，50%黄色，100%绿色）
+
+### 示例2：显示温度进度（20-30度范围，多色模式）
 
 - **entity-id**: `sensor.living_room_temperature`
 - **min-value**: 20
 - **max-value**: 30
 - **direction**: 2（中心扩散）
-- **progress-color**: 0xFF0000（红色）
+- **use-multi-color**: true
+- **num-color-points**: 5
+- **color-points**: [0x0000FF, 0x00FFFF,0x00FF00,0xFFFF00,0xFF0000]（蓝-青-绿-黄-红）
+- **color-thresholds**: [0, 25, 50, 75, 100]（从冷到热）
 
 ### 示例3：显示下载进度
 
@@ -146,6 +166,25 @@ curl http://wled-ip/json/state
 ```bash
 curl -X POST http://wled-ip/json/state -d '{"HA_Progress":{"enabled":true}}'
 ```
+
+### 配置多色模式
+
+```bash
+curl -X POST http://wled-ip/json/state -d '{
+  "HA_Progress": {
+    "enabled": true,
+    "use-multi-color": true,
+    "num-color-points": 3,
+    "color-points": [16711680, 16776960, 65280],
+    "color-thresholds": [0, 50, 100]
+  }
+}'
+```
+
+**说明**：
+- `color-points`: 颜色数组，使用十进制RGB值（16711680=红色0xFF0000，16776960=黄色0xFFFF00，65280=绿色0x00FF00）
+- `color-thresholds`: 阈值数组，对应每个颜色在哪个百分比时显示（0-100）
+- 系统会自动在颜色点之间进行平滑插值渐变
 
 ## 故障排除
 
