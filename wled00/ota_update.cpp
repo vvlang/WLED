@@ -6,6 +6,7 @@
 #include <esp_ota_ops.h>
 #include <esp_flash.h>
 #include <mbedtls/sha256.h>
+#include <WiFiClientSecure.h>
 #endif
 
 // Platform-specific metadata locations
@@ -1193,7 +1194,11 @@ bool downloadAutoUpdate() {
     delay(1);
   }
 
+  #ifdef ESP32
+  client->stop();
+  #else
   client.stop();
+  #endif
 
   // 完成OTA更新
   if (Update.end()) {
