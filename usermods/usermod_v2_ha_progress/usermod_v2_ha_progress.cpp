@@ -25,6 +25,7 @@ private:
   uint32_t progressColor = 0x00FF00;  // 进度条颜色（默认绿色）- 单色模式使用
   uint32_t bgColor = 0x000000;        // 背景颜色（默认黑色）
   bool useMultiColor = false;         // 是否使用多色模式
+  bool useUniformColor = false;        // 是否使用整体变色模式（所有LED显示相同颜色，根据当前进度）
   uint32_t colorPoints[5] = {0xFF0000, 0xFFFF00, 0x00FF00, 0x00FFFF, 0x0000FF}; // 多色模式颜色点（红-黄-绿-青-蓝）
   uint8_t colorThresholds[5] = {0, 25, 50, 75, 100}; // 每个颜色对应的百分比阈值
   uint8_t numColorPoints = 5;         // 实际使用的颜色点数量
@@ -221,6 +222,7 @@ public:
     usermod["progress"] = progressPercent;
     usermod["entity"] = entityId;
     usermod["use-multi-color"] = useMultiColor;
+    usermod["use-uniform-color"] = useUniformColor;
     if (strlen(errorMessage) > 0) {
       usermod["error"] = errorMessage;
     }
@@ -253,6 +255,7 @@ public:
     top["use-attributes"] = useAttributes;
     top["attribute-key"] = attributeKey;
     top["use-multi-color"] = useMultiColor;
+    top["use-uniform-color"] = useUniformColor;
     top["num-color-points"] = numColorPoints;
     
     // 保存颜色点和阈值数组
@@ -287,6 +290,7 @@ public:
       getJsonValue(top["use-attributes"], useAttributes, false);
       getJsonValue(top["attribute-key"], attributeKey);
       getJsonValue(top["use-multi-color"], useMultiColor, false);
+      getJsonValue(top["use-uniform-color"], useUniformColor, false);
       
       // 读取颜色点数量
       uint8_t newNumColorPoints = numColorPoints;
@@ -372,7 +376,12 @@ public:
     oappend(F("addInfo('")); 
     oappend(String(FPSTR(_name)).c_str()); 
     oappend(F(":use-multi-color")); 
-    oappend(F("',1,'<i>启用多色模式，根据进度显示不同颜色</i>');"));
+    oappend(F("',1,'<i>启用多色渐变模式，进度条从开始到结束显示颜色渐变</i>');"));
+    
+    oappend(F("addInfo('")); 
+    oappend(String(FPSTR(_name)).c_str()); 
+    oappend(F(":use-uniform-color")); 
+    oappend(F("',1,'<i>启用整体变色模式，所有LED显示相同颜色，根据当前进度变化</i>');"));
     
     oappend(F("addInfo('")); 
     oappend(String(FPSTR(_name)).c_str()); 
@@ -382,9 +391,16 @@ public:
 
   /**
    * 根据进度百分比获取颜色（多色模式）
+   * @param percent 进度百分比（0-100）
+   * @param useCurrentProgress 如果为true，使用当前进度百分比；如果为false，使用传入的percent参数
    */
-  uint32_t getColorForProgress(int percent) {
-    if (!useMultiColor) {
+  uint32_t getColorForProgress(int percent, bool useCurrentProgress = false) {
+    // 如果使用整体变色模式，使用当前进度百分比
+    if (useCurrentProgress && useUniformColor) {
+      percent = progressPercent;
+    }
+    
+    if (!useMultiColor && !useUniformColor) {
       return progressColor;
     }
 
@@ -423,14 +439,22 @@ public:
     uint16_t totalLEDs = strip.getLengthTotal();
     uint16_t activeLEDs = (totalLEDs * progressPercent) / 100;
 
+    // 整体变色模式：所有激活的LED显示相同颜色（根据当前进度百分比）
+    uint32_t uniformColor = progressColor;
+    if (useUniformColor) {
+      uniformColor = getColorForProgress(progressPercent);
+    }
+
     if (direction == 0) {
       // 正向：从左到右
       for (uint16_t i = 0; i < totalLEDs; i++) {
         if (i < activeLEDs) {
-          // 多色模式：根据LED在进度条中的位置计算颜色（从0%到当前进度%的渐变）
           uint32_t pixelColor;
-          if (useMultiColor && activeLEDs > 0) {
-            // 计算这个LED在进度条中的相对位置（0-100%）
+          if (useUniformColor) {
+            // 整体变色模式：所有LED显示相同颜色
+            pixelColor = uniformColor;
+          } else if (useMultiColor && activeLEDs > 0) {
+            // 多色渐变模式：根据LED在进度条中的位置计算颜色（从0%到当前进度%的渐变）
             int pixelPercent = (i * 100) / activeLEDs;
             pixelPercent = constrain(pixelPercent, 0, 100);
             pixelColor = getColorForProgress(pixelPercent);
@@ -448,10 +472,12 @@ public:
         if (i < (totalLEDs - activeLEDs)) {
           strip.setPixelColor(i, bgColor);
         } else {
-          // 多色模式：根据LED在进度条中的位置计算颜色
           uint32_t pixelColor;
-          if (useMultiColor && activeLEDs > 0) {
-            // 计算这个LED在进度条中的相对位置（从右到左，0%到当前进度%）
+          if (useUniformColor) {
+            // 整体变色模式：所有LED显示相同颜色
+            pixelColor = uniformColor;
+          } else if (useMultiColor && activeLEDs > 0) {
+            // 多色渐变模式：根据LED在进度条中的位置计算颜色
             uint16_t posInProgress = totalLEDs - i - 1;
             int pixelPercent = (posInProgress * 100) / activeLEDs;
             pixelPercent = constrain(pixelPercent, 0, 100);
@@ -470,11 +496,12 @@ public:
       for (uint16_t i = 0; i < totalLEDs; i++) {
         uint16_t distanceFromCenter = abs((int16_t)i - (int16_t)center);
         if (distanceFromCenter < halfActive) {
-          // 多色模式：根据距离中心的距离计算颜色
           uint32_t pixelColor;
-          if (useMultiColor && halfActive > 0) {
-            // 计算从中心到边缘的进度百分比
-            // 中心是100%，边缘是0%
+          if (useUniformColor) {
+            // 整体变色模式：所有LED显示相同颜色
+            pixelColor = uniformColor;
+          } else if (useMultiColor && halfActive > 0) {
+            // 多色渐变模式：根据距离中心的距离计算颜色
             int pixelPercent = ((halfActive - distanceFromCenter) * 100) / halfActive;
             pixelPercent = constrain(pixelPercent, 0, 100);
             pixelColor = getColorForProgress(pixelPercent);
