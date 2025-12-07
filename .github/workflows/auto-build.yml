@@ -156,10 +156,9 @@ jobs:
           TEMP_BODY=$(mktemp)
           
           if [ "${{ steps.check_release.outputs.exists }}" == "true" ]; then
-            # 从existing_body获取内容，使用jq安全地写入文件
+            # 从existing_body获取内容，使用printf '%s'安全地写入文件，避免shell解析反引号
             EXISTING_BODY="${{ steps.existing_body.outputs.body }}"
-            # 使用jq的-r选项输出原始字符串，避免shell解析
-            echo "${EXISTING_BODY}" > "${TEMP_BODY}"
+            printf '%s' "${EXISTING_BODY}" > "${TEMP_BODY}"
             echo "" >> "${TEMP_BODY}"
             echo "### ${ENV_NAME}" >> "${TEMP_BODY}"
             echo "- **编译时间**: ${TIMESTAMP}" >> "${TEMP_BODY}"
