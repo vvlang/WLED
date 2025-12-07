@@ -41,7 +41,7 @@ jobs:
           sed -i -r -e "s/define VERSION .+/define VERSION $VERSION/" wled00/wled.h
 
       - name: Build web UI
-        if: ${{ github.event.inputs.build_web_ui != false }}
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.build_web_ui == false }} != true
         run: npm run build
 
       - name: Set up Python
@@ -52,6 +52,11 @@ jobs:
 
       - name: Install PlatformIO
         run: pip install -r requirements.txt
+
+      - name: Verify PlatformIO installation
+        run: |
+          python -m platformio --version || platformio --version || pio --version
+          which pio || which platformio || echo "PlatformIO not in PATH, using python -m platformio"
 
       - name: Cache PlatformIO
         uses: actions/cache@v4
@@ -65,7 +70,14 @@ jobs:
             pio-${{ runner.os }}-esp32c3dev-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-
 
       - name: Build firmware
-        run: pio run -e esp32c3dev
+        run: |
+          if command -v pio &> /dev/null; then
+            pio run -e esp32c3dev
+          elif command -v platformio &> /dev/null; then
+            platformio run -e esp32c3dev
+          else
+            python -m platformio run -e esp32c3dev
+          fi
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
