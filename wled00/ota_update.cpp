@@ -1159,7 +1159,11 @@ bool downloadAutoUpdate() {
         if (Update.write(buffer, len) != len) {
           snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("OTA写入失败: %s"), Update.errorString());
           Update.abort();
+          #ifdef ESP32
+          client->stop();
+          #else
           client.stop();
+          #endif
           isAutoUpdateDownloading = false;
           return false;
         }
@@ -1177,7 +1181,11 @@ bool downloadAutoUpdate() {
     if (millis() - timeout > 60000) {
       strcpy_P(autoUpdateStatus, PSTR("下载超时"));
       Update.abort();
+      #ifdef ESP32
+      client->stop();
+      #else
       client.stop();
+      #endif
       isAutoUpdateDownloading = false;
       return false;
     }
