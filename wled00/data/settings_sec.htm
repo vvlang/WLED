@@ -53,30 +53,101 @@
 				if (callback) callback(null);
 			});
 		}
+		var updateCheckInterval = null;
+		var updateCheckTimeout = null;
+		
 		function checkUpdate() {
 			const statusDiv = gId("autoUpdateStatus");
 			if (!statusDiv) return;
+			
+			// 清除之前的轮询
+			if (updateCheckInterval) {
+				clearInterval(updateCheckInterval);
+				updateCheckInterval = null;
+			}
+			if (updateCheckTimeout) {
+				clearTimeout(updateCheckTimeout);
+				updateCheckTimeout = null;
+			}
+			
 			statusDiv.innerHTML = "正在检查更新...";
+			
+			// 发送检查更新请求
 			requestJson({"autoUpdate": {"checkUpdate": true}}, function(obj) {
-				setTimeout(function() {
-					updateAutoUpdateStatus();
-				}, 1000);
+				// 开始轮询状态，每500ms查询一次
+				var pollCount = 0;
+				var maxPolls = 60; // 最多轮询60次（30秒）
+				
+				updateCheckInterval = setInterval(function() {
+					pollCount++;
+					updateAutoUpdateStatus(function(isChecking) {
+						// 如果检查完成（状态不再是"正在检查更新..."），停止轮询
+						if (!isChecking || pollCount >= maxPolls) {
+							if (updateCheckInterval) {
+								clearInterval(updateCheckInterval);
+								updateCheckInterval = null;
+							}
+							if (pollCount >= maxPolls) {
+								const statusDiv = gId("autoUpdateStatus");
+								if (statusDiv && statusDiv.innerHTML.indexOf("正在检查更新...") >= 0) {
+									statusDiv.innerHTML = "<strong>状态:</strong> 检查超时，请稍后重试";
+								}
+							}
+						}
+					});
+				}, 500);
+				
+				// 设置超时，30秒后强制停止轮询
+				updateCheckTimeout = setTimeout(function() {
+					if (updateCheckInterval) {
+						clearInterval(updateCheckInterval);
+						updateCheckInterval = null;
+					}
+				}, 30000);
 			});
 		}
-		function updateAutoUpdateStatus() {
+		
+		function updateAutoUpdateStatus(callback) {
 			requestJson(null, function(obj) {
-				if (obj && obj.autoUpdate) {
-					const statusDiv = gId("autoUpdateStatus");
-					if (!statusDiv) return;
-					let html = "<strong>状态:</strong> " + (obj.autoUpdate.status || "未知");
-					if (obj.autoUpdate.latestVersion) {
-						html += "<br><strong>最新版本:</strong> " + obj.autoUpdate.latestVersion;
-					}
-					if (obj.autoUpdate.currentVersion) {
-						html += "<br><strong>当前版本:</strong> " + obj.autoUpdate.currentVersion;
-					}
-					statusDiv.innerHTML = html;
+				if (!obj) {
+					if (callback) callback(false);
+					return;
 				}
+				
+				// /json/si 返回 {state: {...}, info: {...}}
+				// autoUpdate 在 info 对象中
+				var autoUpdate = null;
+				if (obj.info && obj.info.autoUpdate) {
+					autoUpdate = obj.info.autoUpdate;
+				} else if (obj.autoUpdate) {
+					// 兼容直接访问
+					autoUpdate = obj.autoUpdate;
+				}
+				
+				if (!autoUpdate) {
+					if (callback) callback(false);
+					return;
+				}
+				
+				const statusDiv = gId("autoUpdateStatus");
+				if (!statusDiv) {
+					if (callback) callback(false);
+					return;
+				}
+				
+				var status = autoUpdate.status || "未知";
+				var isChecking = status.indexOf("正在检查更新") >= 0 || status.indexOf("检查更新") >= 0;
+				
+				let html = "<strong>状态:</strong> " + status;
+				if (autoUpdate.latestVersion) {
+					html += "<br><strong>最新版本:</strong> " + autoUpdate.latestVersion;
+				}
+				if (autoUpdate.currentVersion) {
+					html += "<br><strong>当前版本:</strong> " + autoUpdate.currentVersion;
+				}
+				statusDiv.innerHTML = html;
+				
+				if (callback) callback(isChecking);
 			});
 		}
 	</script>
