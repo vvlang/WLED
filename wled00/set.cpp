@@ -618,6 +618,20 @@ void handleSettingsSet(AsyncWebServerRequest *request, byte subPage)
       aOtaEnabled = request->hasArg(F("AO"));
       #endif
       otaSameSubnet = request->hasArg(F("SU"));
+      autoUpdateEnabled = request->hasArg(F("AU"));
+      autoUpdateInstall = request->hasArg(F("AI"));
+      unsigned long interval = request->arg(F("UI")).toInt();
+      if (interval >= 3600000 && interval <= 86400000) { // 1 hour to 24 hours
+        autoUpdateInterval = interval;
+      }
+      String repoOwner = request->arg(F("RO"));
+      if (repoOwner.length() > 0 && repoOwner.length() < 33) {
+        strlcpy(autoUpdateRepoOwner, repoOwner.c_str(), 33);
+      }
+      String repoName = request->arg(F("RN"));
+      if (repoName.length() > 0 && repoName.length() < 33) {
+        strlcpy(autoUpdateRepoName, repoName.c_str(), 33);
+      }
     }
   }
 

@@ -614,6 +614,13 @@ void getSettingsJS(byte subPage, Print& settingsScript)
     printSetFormCheckbox(settingsScript,PSTR("OW"),wifiLock);
     printSetFormCheckbox(settingsScript,PSTR("AO"),aOtaEnabled);
     printSetFormCheckbox(settingsScript,PSTR("SU"),otaSameSubnet);
+    #ifndef WLED_DISABLE_OTA
+    printSetFormCheckbox(settingsScript,PSTR("AU"),autoUpdateEnabled);
+    printSetFormCheckbox(settingsScript,PSTR("AI"),autoUpdateInstall);
+    printSetFormValue(settingsScript,PSTR("UI"),autoUpdateInterval);
+    printSetFormValue(settingsScript,PSTR("RO"),autoUpdateRepoOwner);
+    printSetFormValue(settingsScript,PSTR("RN"),autoUpdateRepoName);
+    #endif
     char tmp_buf[128];
     fillWLEDVersion(tmp_buf,sizeof(tmp_buf));
     printSetClassElementHTML(settingsScript,PSTR("sip"),0,tmp_buf);

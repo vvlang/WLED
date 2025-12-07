@@ -100,13 +100,122 @@ jobs:
             echo "name=$(basename $FIRMWARE_FILE)" >> $GITHUB_OUTPUT
           fi
 
+      - name: Get version number
+        id: version
+        run: |
+          VERSION=$(grep -E "^#define VERSION" wled00/wled.h | awk '{print $3}')
+          # 将版本号转换为日期格式 (yymmddb -> vYY.MM.DD-b)
+          YEAR=$((2000 + ${VERSION:0:2}))
+          MONTH=${VERSION:2:2}
+          DAY=${VERSION:4:2}
+          BUILD=${VERSION:6:1}
+          VERSION_TAG="v${YEAR}.${MONTH}.${DAY}-${BUILD}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$VERSION_TAG" >> $GITHUB_OUTPUT
+          echo "name=WLED ${YEAR}.${MONTH}.${DAY} (Build ${BUILD})" >> $GITHUB_OUTPUT
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          REPO="${{ github.repository }}"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$REPO/releases/tags/$TAG")
+          
+          if [ "$RESPONSE" = "200" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release $TAG already exists, will update it"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release $TAG does not exist, will create it"
+          fi
+
+      - name: Get existing release body
+        id: existing_body
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          REPO="${{ github.repository }}"
+          BODY=$(curl -s \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/$REPO/releases/tags/$TAG" | jq -r '.body')
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Prepare release body
+        id: release_body
+        run: |
+          ENV_NAME="${{ github.event.inputs.environment || 'esp32c3dev' }}"
+          VERSION="${{ steps.version.outputs.version }}"
+          COMMIT_SHA="${{ github.sha }}"
+          COMMIT_MSG="${{ github.event.head_commit.message || 'Auto build' }}"
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          if [ "${{ steps.check_release.outputs.exists }}" == "true" ]; then
+            # 更新现有Release，追加新环境信息
+            EXISTING_BODY="${{ steps.existing_body.outputs.body }}"
+            NEW_SECTION="
+### $ENV_NAME
+- **编译时间**: $TIMESTAMP
+- **提交**: \`$COMMIT_SHA\`
+- **提交信息**: $COMMIT_MSG
+"
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            echo "$EXISTING_BODY" >> $GITHUB_OUTPUT
+            echo "$NEW_SECTION" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            # 创建新Release
+            echo "body<<EOF" >> $GITHUB_OUTPUT
+            echo "## WLED 固件发布" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "**版本号**: \`$VERSION\`" >> $GITHUB_OUTPUT
+            echo "**编译时间**: $TIMESTAMP" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "## 支持的平台" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "### $ENV_NAME" >> $GITHUB_OUTPUT
+            echo "- **编译时间**: $TIMESTAMP" >> $GITHUB_OUTPUT
+            echo "- **提交**: \`$COMMIT_SHA\`" >> $GITHUB_OUTPUT
+            echo "- **提交信息**: $COMMIT_MSG" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "## 下载" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "请下载对应您设备平台的固件文件。" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "---" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
+            echo "*此版本由GitHub Actions自动编译生成*" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create or Update Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: ${{ steps.version.outputs.name }}
+          body: ${{ steps.release_body.outputs.body }}
+          files: |
+            build_output/release/*.bin
+          draft: false
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build summary
         run: |
           echo "## 固件编译完成 ✅" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**环境**: ${{ github.event.inputs.environment || 'esp32c3dev' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**版本号**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Release标签**: ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "**固件文件**: ${{ steps.firmware_info.outputs.name }}" >> $GITHUB_STEP_SUMMARY
           echo "**文件大小**: ${{ steps.firmware_info.outputs.size }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "固件已上传为Artifact，可在Actions页面下载。" >> $GITHUB_STEP_SUMMARY
+          echo "✅ 固件已自动发布到 [Releases](${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }})" >> $GITHUB_STEP_SUMMARY
 

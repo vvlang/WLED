@@ -749,3 +749,337 @@ void handleBootloaderOTAData(AsyncWebServerRequest *request, size_t index, uint8
   }
 }
 #endif
+
+#ifndef WLED_DISABLE_OTA
+// Auto Update Functions
+static bool isAutoUpdateChecking = false;
+static bool isAutoUpdateDownloading = false;
+
+/**
+ * 从GitHub API获取最新release信息
+ */
+bool checkAutoUpdate() {
+  if (isAutoUpdateChecking || !autoUpdateEnabled || !WLED_CONNECTED || otaLock) {
+    return false;
+  }
+
+  isAutoUpdateChecking = true;
+  strcpy_P(autoUpdateStatus, PSTR("正在检查更新..."));
+  
+  WiFiClient client;
+  client.setTimeout(15000);
+  client.stop();
+  
+  if (!client.connect("api.github.com", 80)) {
+    strcpy_P(autoUpdateStatus, PSTR("连接GitHub API失败"));
+    isAutoUpdateChecking = false;
+    return false;
+  }
+
+  String url = "/repos/";
+  url += autoUpdateRepoOwner;
+  url += "/";
+  url += autoUpdateRepoName;
+  url += "/releases/latest";
+  
+  String request = "GET " + url + " HTTP/1.1\r\n";
+  request += "Host: api.github.com\r\n";
+  request += "User-Agent: WLED-AutoUpdate\r\n";
+  request += "Connection: close\r\n";
+  request += "Accept: application/vnd.github.v3+json\r\n";
+  request += "\r\n";
+
+  if (client.print(request) == 0) {
+    strcpy_P(autoUpdateStatus, PSTR("发送请求失败"));
+    client.stop();
+    isAutoUpdateChecking = false;
+    return false;
+  }
+
+  // 等待响应
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > 15000) {
+      strcpy_P(autoUpdateStatus, PSTR("响应超时"));
+      client.stop();
+      isAutoUpdateChecking = false;
+      return false;
+    }
+    delay(10);
+  }
+
+  // 读取HTTP响应头
+  String response = "";
+  while (client.available()) {
+    String line = client.readStringUntil('\n');
+    line.trim();
+    if (line.length() == 0) break;
+    response += line + "\n";
+  }
+
+  // 检查HTTP状态码
+  if (response.indexOf("HTTP/1.1 200") < 0 && response.indexOf("HTTP/1.0 200") < 0) {
+    strcpy_P(autoUpdateStatus, PSTR("GitHub API错误"));
+    client.stop();
+    isAutoUpdateChecking = false;
+    return false;
+  }
+
+  // 读取JSON响应
+  String jsonResponse = "";
+  timeout = millis();
+  while (client.connected() || client.available()) {
+    if (client.available()) {
+      char c = client.read();
+      jsonResponse += c;
+      timeout = millis();
+    }
+    if (millis() - timeout > 5000) break;
+    delay(1);
+  }
+  client.stop();
+
+  // 解析JSON
+  if (!requestJSONBufferLock(14)) {
+    isAutoUpdateChecking = false;
+    return false;
+  }
+  
+  DynamicJsonDocument doc(8192);
+  DeserializationError error = deserializeJson(doc, jsonResponse);
+  
+  if (error) {
+    strcpy_P(autoUpdateStatus, PSTR("JSON解析失败"));
+    releaseJSONBufferLock();
+    isAutoUpdateChecking = false;
+    return false;
+  }
+
+  // 提取版本号和下载URL
+  if (doc.containsKey("tag_name")) {
+    String tagName = doc["tag_name"].as<String>();
+    // 移除版本号前缀"v"（如果有）
+    if (tagName.startsWith("v")) {
+      tagName = tagName.substring(1);
+    }
+    strlcpy(autoUpdateLatestVersion, tagName.c_str(), sizeof(autoUpdateLatestVersion));
+  } else {
+    strcpy_P(autoUpdateStatus, PSTR("未找到版本信息"));
+    releaseJSONBufferLock();
+    isAutoUpdateChecking = false;
+    return false;
+  }
+
+  // 查找.bin文件
+  if (doc.containsKey("assets")) {
+    JsonArray assets = doc["assets"];
+    for (JsonObject asset : assets) {
+      String name = asset["name"].as<String>();
+      if (name.endsWith(".bin")) {
+        String firmwareUrl = asset["browser_download_url"].as<String>();
+        strlcpy(autoUpdateFirmwareUrl, firmwareUrl.c_str(), sizeof(autoUpdateFirmwareUrl));
+        break;
+      }
+    }
+  }
+
+  releaseJSONBufferLock();
+
+  if (strlen(autoUpdateFirmwareUrl) == 0) {
+    strcpy_P(autoUpdateStatus, PSTR("未找到固件文件"));
+    isAutoUpdateChecking = false;
+    return false;
+  }
+
+  // 比较版本号
+  char currentVerStr[16];
+  snprintf_P(currentVerStr, sizeof(currentVerStr), PSTR("%d"), VERSION);
+  
+  // 简化版本比较：假设版本格式为 yymmddb (例如: 2506160)
+  uint32_t currentVer = VERSION;
+  uint32_t latestVer = 0;
+  
+  // 尝试解析版本号（可能是数字格式或x.y.z格式）
+  if (strlen(autoUpdateLatestVersion) == 7) {
+    latestVer = atoi(autoUpdateLatestVersion);
+  } else {
+    // 标准版本号格式 (x.y.z) - 转换为数字格式进行比较
+    // 这里简化处理，只比较主要版本号
+    latestVer = atoi(autoUpdateLatestVersion);
+  }
+  
+  if (latestVer > currentVer) {
+    // 发现新版本
+    snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("发现新版本: %s (当前: %d)"), autoUpdateLatestVersion, VERSION);
+    
+    if (autoUpdateInstall) {
+      // 自动安装
+      downloadAutoUpdate();
+    }
+  } else if (latestVer == currentVer) {
+    snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("已是最新版本: %d"), VERSION);
+  } else {
+    snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("当前版本更新: %d"), VERSION);
+  }
+
+  isAutoUpdateChecking = false;
+  return true;
+}
+
+/**
+ * 下载固件文件并执行OTA更新
+ */
+bool downloadAutoUpdate() {
+  if (isAutoUpdateDownloading || strlen(autoUpdateFirmwareUrl) == 0) {
+    return false;
+  }
+
+  isAutoUpdateDownloading = true;
+  strcpy_P(autoUpdateStatus, PSTR("正在下载固件..."));
+  
+  // 解析URL获取主机和路径
+  String url = autoUpdateFirmwareUrl;
+  url.replace("https://", "");
+  url.replace("http://", "");
+  
+  int slashPos = url.indexOf('/');
+  if (slashPos < 0) {
+    strcpy_P(autoUpdateStatus, PSTR("无效的下载URL"));
+    isAutoUpdateDownloading = false;
+    return false;
+  }
+  
+  String host = url.substring(0, slashPos);
+  String path = url.substring(slashPos);
+  
+  WiFiClient client;
+  client.setTimeout(30000);
+  client.stop();
+  
+  if (!client.connect(host.c_str(), 80)) {
+    strcpy_P(autoUpdateStatus, PSTR("连接下载服务器失败"));
+    isAutoUpdateDownloading = false;
+    return false;
+  }
+
+  String request = "GET " + path + " HTTP/1.1\r\n";
+  request += "Host: " + host + "\r\n";
+  request += "Connection: close\r\n";
+  request += "User-Agent: WLED-AutoUpdate\r\n";
+  request += "\r\n";
+
+  if (client.print(request) == 0) {
+    strcpy_P(autoUpdateStatus, PSTR("发送下载请求失败"));
+    client.stop();
+    isAutoUpdateDownloading = false;
+    return false;
+  }
+
+  // 等待响应
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > 30000) {
+      strcpy_P(autoUpdateStatus, PSTR("下载响应超时"));
+      client.stop();
+      isAutoUpdateDownloading = false;
+      return false;
+    }
+    delay(10);
+  }
+
+  // 读取HTTP响应头
+  String header = "";
+  size_t contentLength = 0;
+  while (client.available()) {
+    String line = client.readStringUntil('\n');
+    line.trim();
+    if (line.length() == 0) break;
+    
+    if (line.startsWith("Content-Length:")) {
+      contentLength = line.substring(15).toInt();
+    }
+    header += line + "\n";
+  }
+
+  // 检查HTTP状态码
+  if (header.indexOf("HTTP/1.1 200") < 0 && header.indexOf("HTTP/1.0 200") < 0) {
+    strcpy_P(autoUpdateStatus, PSTR("下载失败"));
+    client.stop();
+    isAutoUpdateDownloading = false;
+    return false;
+  }
+
+  if (contentLength == 0) {
+    strcpy_P(autoUpdateStatus, PSTR("无法确定文件大小"));
+    client.stop();
+    isAutoUpdateDownloading = false;
+    return false;
+  }
+
+  // 初始化OTA更新
+  if (Update.isRunning()) {
+    Update.abort();
+  }
+
+  if (!Update.begin(contentLength)) {
+    snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("OTA初始化失败: %s"), Update.errorString());
+    client.stop();
+    isAutoUpdateDownloading = false;
+    return false;
+  }
+
+  // 下载并写入OTA
+  size_t downloadedSize = 0;
+  uint8_t buffer[512];
+  timeout = millis();
+  
+  while (client.connected() || client.available()) {
+    if (client.available()) {
+      size_t len = client.readBytes(buffer, sizeof(buffer));
+      if (len > 0) {
+        if (Update.write(buffer, len) != len) {
+          snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("OTA写入失败: %s"), Update.errorString());
+          Update.abort();
+          client.stop();
+          isAutoUpdateDownloading = false;
+          return false;
+        }
+        downloadedSize += len;
+        timeout = millis();
+        
+        // 更新状态
+        if (contentLength > 0) {
+          int percent = (downloadedSize * 100) / contentLength;
+          snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("下载中: %d%%"), percent);
+        }
+      }
+    }
+    
+    if (millis() - timeout > 60000) {
+      strcpy_P(autoUpdateStatus, PSTR("下载超时"));
+      Update.abort();
+      client.stop();
+      isAutoUpdateDownloading = false;
+      return false;
+    }
+    
+    delay(1);
+  }
+
+  client.stop();
+
+  // 完成OTA更新
+  if (Update.end()) {
+    strcpy_P(autoUpdateStatus, PSTR("固件下载完成，准备重启..."));
+    delay(1000);
+    doReboot = true;
+    isAutoUpdateDownloading = false;
+    return true;
+  } else {
+    snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("OTA完成失败: %s"), Update.errorString());
+    Update.abort();
+    isAutoUpdateDownloading = false;
+    return false;
+  }
+}
+#endif // WLED_DISABLE_OTA

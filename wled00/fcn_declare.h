@@ -558,4 +558,10 @@ void sendDataWs(AsyncWebSocketClient * client = nullptr);
 void XML_response(Print& dest);
 void getSettingsJS(byte subPage, Print& dest);
 
+//ota_update.cpp
+#ifndef WLED_DISABLE_OTA
+bool checkAutoUpdate();
+bool downloadAutoUpdate();
+#endif
+
 #endif

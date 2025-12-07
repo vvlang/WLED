@@ -726,6 +726,11 @@ bool deserializeConfig(JsonObject doc, bool fromFS) {
     #endif
     getStringFromJson(otaPass, pwd, 33); //normally not present due to security
     CJSON(otaSameSubnet, ota[F("same-subnet")]);
+    CJSON(autoUpdateEnabled, ota[F("auto-update")]);
+    CJSON(autoUpdateInstall, ota[F("auto-install")]);
+    CJSON(autoUpdateInterval, ota[F("update-interval")]);
+    getStringFromJson(autoUpdateRepoOwner, ota[F("repo-owner")], 33);
+    getStringFromJson(autoUpdateRepoName, ota[F("repo-name")], 33);
   }
 
   #ifdef WLED_ENABLE_DMX
@@ -1233,6 +1238,11 @@ void serializeConfig(JsonObject root) {
   ota[F("aota")] = aOtaEnabled;
   #endif
   ota[F("same-subnet")] = otaSameSubnet;
+  ota[F("auto-update")] = autoUpdateEnabled;
+  ota[F("auto-install")] = autoUpdateInstall;
+  ota[F("update-interval")] = autoUpdateInterval;
+  ota[F("repo-owner")] = autoUpdateRepoOwner;
+  ota[F("repo-name")] = autoUpdateRepoName;
 
   #ifdef WLED_ENABLE_DMX
   JsonObject dmx = root.createNestedObject("dmx");

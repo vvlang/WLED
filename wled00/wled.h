@@ -589,6 +589,17 @@ WLED_GLOBAL char settingsPIN[5] _INIT(WLED_PIN);  // PIN for settings pages
 WLED_GLOBAL bool correctPIN     _INIT(!strlen(settingsPIN));
 WLED_GLOBAL unsigned long lastEditTime _INIT(0);
 
+// Auto Update Settings
+WLED_GLOBAL bool autoUpdateEnabled _INIT(false);  // enable automatic firmware update check
+WLED_GLOBAL bool autoUpdateInstall _INIT(false);  // automatically install updates when found
+WLED_GLOBAL unsigned long autoUpdateInterval _INIT(3600000UL); // check interval in milliseconds (default 1 hour)
+WLED_GLOBAL char autoUpdateRepoOwner[33] _INIT("vvlang"); // GitHub repository owner
+WLED_GLOBAL char autoUpdateRepoName[33] _INIT("WLED");    // GitHub repository name
+WLED_GLOBAL unsigned long lastAutoUpdateCheck _INIT(0);   // last check time
+WLED_GLOBAL char autoUpdateStatus[128] _INIT("");         // current status message
+WLED_GLOBAL char autoUpdateLatestVersion[33] _INIT("");   // latest version found
+WLED_GLOBAL char autoUpdateFirmwareUrl[256] _INIT("");    // firmware download URL
+
 WLED_GLOBAL uint16_t userVar0 _INIT(0), userVar1 _INIT(0); //available for use in usermod
 
 // internal global variable declarations

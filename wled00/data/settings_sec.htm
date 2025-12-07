@@ -26,8 +26,33 @@
 			loadJS(getURL('/settings/s.js?p=6'), false, undefined, ()=>{
 				setBckFilename(gId("bckcfg"));
 				setBckFilename(gId("bckpresets"));
+				updateAutoUpdateStatus();
 			});	// If we set async false, file is loaded and executed, then next statement is processed
 			if (loc) d.Sf.action = getURL('/settings/sec');
+		}
+		function checkUpdate() {
+			const statusDiv = gId("autoUpdateStatus");
+			statusDiv.innerHTML = "正在检查更新...";
+			requestJson({"checkUpdate": true}, function(obj) {
+				if (obj && obj.autoUpdate) {
+					updateAutoUpdateStatus();
+				}
+			});
+		}
+		function updateAutoUpdateStatus() {
+			requestJson(null, function(obj) {
+				if (obj && obj.autoUpdate) {
+					const statusDiv = gId("autoUpdateStatus");
+					let html = "<strong>状态:</strong> " + (obj.autoUpdate.status || "未知");
+					if (obj.autoUpdate.latestVersion) {
+						html += "<br><strong>最新版本:</strong> " + obj.autoUpdate.latestVersion;
+					}
+					if (obj.autoUpdate.currentVersion) {
+						html += "<br><strong>当前版本:</strong> " + obj.autoUpdate.currentVersion;
+					}
+					statusDiv.innerHTML = html;
+				}
+			});
 		}
 	</script>
 	<style>
@@ -59,7 +84,17 @@
 		<div id="aOTA">启用ArduinoOTA: <input type="checkbox" name="AO"></div>
 		仅允许从同一网络/WiFi更新: <input type="checkbox" name="SU"><br>
 		<i class="warn">&#9888; 如果您使用多个VLAN（即IoT或访客网络），请设置PIN码或禁用此选项。<br>
-			禁用此选项将使您的设备安全性降低。</i><br></span>
+			禁用此选项将使您的设备安全性降低。</i><br>
+		<hr>
+		<h3>自动更新</h3>
+		启用自动检查更新: <input type="checkbox" name="AU"><br>
+		发现新版本时自动安装: <input type="checkbox" name="AI"><br>
+		检查间隔（毫秒，最小3600000=1小时）: <input type="number" name="UI" min="3600000" max="86400000" step="3600000"><br>
+		GitHub仓库所有者: <input type="text" name="RO" maxlength="32" placeholder="vvlang"><br>
+		GitHub仓库名称: <input type="text" name="RN" maxlength="32" placeholder="WLED"><br>
+		<div id="autoUpdateStatus" style="margin-top:10px; padding:5px; background:#f0f0f0; border-radius:3px;"></div>
+		<button type="button" onclick="checkUpdate()" style="margin-top:10px;">立即检查更新</button><br>
+		<i class="warn">&#9888; 自动更新功能会定期从GitHub检查新版本。请确保仓库地址正确。</i><br></span>
 		<hr id="backup">
 		<h3>备份与恢复</h3>
 		<div class="warn">&#9888; 恢复预设/配置将覆盖您当前的预设/配置。<br>

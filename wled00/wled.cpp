@@ -169,6 +169,15 @@ void WLED::loop()
     correctPIN = false;
   }
 
+  // Auto Update Check
+  #ifndef WLED_DISABLE_OTA
+  if (autoUpdateEnabled && WLED_CONNECTED && !otaLock && 
+      (millis() - lastAutoUpdateCheck >= autoUpdateInterval || lastAutoUpdateCheck == 0)) {
+    lastAutoUpdateCheck = millis();
+    checkAutoUpdate();
+  }
+  #endif
+
   // reconnect WiFi to clear stale allocations if heap gets too low
   if (millis() - heapTime > 15000) {
     uint32_t heap = getFreeHeapSize();

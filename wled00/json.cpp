@@ -435,6 +435,19 @@ bool deserializeState(JsonObject root, byte callMode, byte presetId)
 
   if (root[F("psave")].isNull()) doReboot = root[F("rb")] | doReboot;
 
+  #ifndef WLED_DISABLE_OTA
+  // Handle auto update check request
+  JsonObject autoUpdate = root["autoUpdate"];
+  if (!autoUpdate.isNull()) {
+    if (autoUpdate["checkUpdate"] | false) {
+      checkAutoUpdate();
+    }
+    if (autoUpdate["installUpdate"] | false) {
+      downloadAutoUpdate();
+    }
+  }
+  #endif
+
   // do not allow changing main segment while in realtime mode (may get odd results else)
   if (!realtimeMode) strip.setMainSegmentId(root[F("mainseg")] | strip.getMainSegmentId()); // must be before realtimeLock() if "live"
 
@@ -650,6 +663,18 @@ void serializeState(JsonObject root, bool forPreset, bool includeBri, bool segme
     root[F("ledmap")] = currentLedmap;
 
     UsermodManager::addToJsonState(root);
+
+    #ifndef WLED_DISABLE_OTA
+    JsonObject autoUpdate = root.createNestedObject("autoUpdate");
+    autoUpdate["enabled"] = autoUpdateEnabled;
+    autoUpdate["status"] = autoUpdateStatus;
+    if (strlen(autoUpdateLatestVersion) > 0) {
+      autoUpdate["latestVersion"] = autoUpdateLatestVersion;
+    }
+    char currentVerStr[16];
+    snprintf_P(currentVerStr, sizeof(currentVerStr), PSTR("%d"), VERSION);
+    autoUpdate["currentVersion"] = currentVerStr;
+    #endif
 
     JsonObject nl = root.createNestedObject("nl");
     nl["on"] = nightlightActive;
