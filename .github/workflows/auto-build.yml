@@ -156,25 +156,37 @@ jobs:
           TEMP_BODY=$(mktemp)
           
           if [ "${{ steps.check_release.outputs.exists }}" == "true" ]; then
+            # 从existing_body获取内容，使用jq安全地写入文件
             EXISTING_BODY="${{ steps.existing_body.outputs.body }}"
-            printf "%s\n\n" "${EXISTING_BODY}" > "${TEMP_BODY}"
-            printf "### %s\n" "${ENV_NAME}" >> "${TEMP_BODY}"
-            printf "- **编译时间**: %s\n" "${TIMESTAMP}" >> "${TEMP_BODY}"
-            printf "- **提交**: \`%s\`\n" "${COMMIT_SHA}" >> "${TEMP_BODY}"
-            printf "- **提交信息**: %s\n" "${COMMIT_MSG}" >> "${TEMP_BODY}"
+            # 使用jq的-r选项输出原始字符串，避免shell解析
+            echo "${EXISTING_BODY}" > "${TEMP_BODY}"
+            echo "" >> "${TEMP_BODY}"
+            echo "### ${ENV_NAME}" >> "${TEMP_BODY}"
+            echo "- **编译时间**: ${TIMESTAMP}" >> "${TEMP_BODY}"
+            echo "- **提交**: \`${COMMIT_SHA}\`" >> "${TEMP_BODY}"
+            echo "- **提交信息**: ${COMMIT_MSG}" >> "${TEMP_BODY}"
           else
-            printf "## WLED 固件发布\n\n" > "${TEMP_BODY}"
-            printf "**版本号**: \`%s\`\n" "${VERSION}" >> "${TEMP_BODY}"
-            printf "**编译时间**: %s\n\n" "${TIMESTAMP}" >> "${TEMP_BODY}"
-            printf "## 支持的平台\n\n" >> "${TEMP_BODY}"
-            printf "### %s\n" "${ENV_NAME}" >> "${TEMP_BODY}"
-            printf "- **编译时间**: %s\n" "${TIMESTAMP}" >> "${TEMP_BODY}"
-            printf "- **提交**: \`%s\`\n" "${COMMIT_SHA}" >> "${TEMP_BODY}"
-            printf "- **提交信息**: %s\n\n" "${COMMIT_MSG}" >> "${TEMP_BODY}"
-            printf "## 下载\n\n" >> "${TEMP_BODY}"
-            printf "请下载对应您设备平台的固件文件。\n\n" >> "${TEMP_BODY}"
-            printf "---\n\n" >> "${TEMP_BODY}"
-            printf "*此版本由GitHub Actions自动编译生成*\n" >> "${TEMP_BODY}"
+            {
+              echo "## WLED 固件发布"
+              echo ""
+              echo "**版本号**: \`${VERSION}\`"
+              echo "**编译时间**: ${TIMESTAMP}"
+              echo ""
+              echo "## 支持的平台"
+              echo ""
+              echo "### ${ENV_NAME}"
+              echo "- **编译时间**: ${TIMESTAMP}"
+              echo "- **提交**: \`${COMMIT_SHA}\`"
+              echo "- **提交信息**: ${COMMIT_MSG}"
+              echo ""
+              echo "## 下载"
+              echo ""
+              echo "请下载对应您设备平台的固件文件。"
+              echo ""
+              echo "---"
+              echo ""
+              echo "*此版本由GitHub Actions自动编译生成*"
+            } > "${TEMP_BODY}"
           fi
           
           # 使用heredoc输出到GITHUB_OUTPUT
