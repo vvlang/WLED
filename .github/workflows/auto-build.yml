@@ -4,20 +4,6 @@ on:
   # 手动触发
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'PlatformIO environment to build'
-        required: true
-        default: 'esp32c3dev'
-        type: choice
-        options:
-          - esp32c3dev
-          - esp32dev
-          - nodemcuv2
-          - esp8266_2m
-          - esp32_eth
-          - esp32_wrover
-          - lolin_s2_mini
-          - esp32S3_wroom2
       build_web_ui:
         description: 'Build web UI first'
         required: true
@@ -32,10 +18,12 @@ on:
       - '.gitignore'
       - 'LICENSE'
       - '.github/**'
+  
+  # 只编译ESP32-C3，移除其他环境的选项
 
 jobs:
   build:
-    name: Build ${{ github.event.inputs.environment || 'esp32c3dev' }}
+    name: Build ESP32-C3
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -56,6 +44,7 @@ jobs:
           sed -i -r -e "s/define VERSION .+/define VERSION $VERSION/" wled00/wled.h
 
       - name: Build web UI
+        if: ${{ github.event.inputs.build_web_ui != false }}
         run: npm run build
 
       - name: Set up Python
@@ -74,17 +63,17 @@ jobs:
             ~/.platformio/.cache
             ~/.buildcache
             build_output
-          key: pio-${{ runner.os }}-${{ github.event.inputs.environment || 'esp32c3dev' }}-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-${{ hashFiles('wled00/**', 'usermods/**') }}
+          key: pio-${{ runner.os }}-esp32c3dev-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-${{ hashFiles('wled00/**', 'usermods/**') }}
           restore-keys: |
-            pio-${{ runner.os }}-${{ github.event.inputs.environment || 'esp32c3dev' }}-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-
+            pio-${{ runner.os }}-esp32c3dev-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-
 
       - name: Build firmware
-        run: pio run -e ${{ github.event.inputs.environment || 'esp32c3dev' }}
+        run: pio run -e esp32c3dev
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-${{ github.event.inputs.environment || 'esp32c3dev' }}
+          name: firmware-esp32c3dev
           path: |
             build_output/release/*.bin
           retention-days: 30
@@ -149,7 +138,7 @@ jobs:
       - name: Prepare release body
         id: release_body
         run: |
-          ENV_NAME="${{ github.event.inputs.environment || 'esp32c3dev' }}"
+          ENV_NAME="esp32c3dev"
           VERSION="${{ steps.version.outputs.version }}"
           COMMIT_SHA="${{ github.sha }}"
           COMMIT_MSG="${{ github.event.head_commit.message || 'Auto build' }}"
@@ -211,7 +200,7 @@ jobs:
         run: |
           echo "## 固件编译完成 ✅" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**环境**: ${{ github.event.inputs.environment || 'esp32c3dev' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**环境**: esp32c3dev" >> $GITHUB_STEP_SUMMARY
           echo "**版本号**: ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "**Release标签**: ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
           echo "**固件文件**: ${{ steps.firmware_info.outputs.name }}" >> $GITHUB_STEP_SUMMARY
