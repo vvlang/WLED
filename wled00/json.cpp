@@ -1133,6 +1133,13 @@ void serveJson(AsyncWebServerRequest* request)
   json_target subJson = json_target::all;
 
   const String& url = request->url();
+  #ifdef WLED_ENABLE_JSONLIVE
+  // 优先检查 /json/live 端点
+  if (url.indexOf("/live") > 0 || url == "/json/live") {
+    serveLiveLeds(request);
+    return;
+  }
+  #endif
   if      (url.indexOf("state")    > 0) subJson = json_target::state;
   else if (url.indexOf("info")     > 0) subJson = json_target::info;
   else if (url.indexOf("si")       > 0) subJson = json_target::state_info;
@@ -1142,12 +1149,6 @@ void serveJson(AsyncWebServerRequest* request)
   else if (url.indexOf(F("fxda"))  > 0) subJson = json_target::fxdata;
   else if (url.indexOf(F("net"))   > 0) subJson = json_target::networks;
   else if (url.indexOf(F("cfg"))   > 0) subJson = json_target::config;
-  #ifdef WLED_ENABLE_JSONLIVE
-  else if (url.indexOf("live")     > 0) {
-    serveLiveLeds(request);
-    return;
-  }
-  #endif
   else if (url.indexOf("pal") > 0) {
     request->send_P(200, FPSTR(CONTENT_TYPE_JSON), JSON_palette_names);
     return;
