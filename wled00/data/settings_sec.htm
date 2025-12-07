@@ -30,19 +30,44 @@
 			});	// If we set async false, file is loaded and executed, then next statement is processed
 			if (loc) d.Sf.action = getURL('/settings/sec');
 		}
+		function requestJson(command, callback) {
+			var type = command ? 'POST' : 'GET';
+			var body = command ? JSON.stringify(command) : null;
+			fetch(getURL('/json/si'), {
+				method: type,
+				headers: {"Content-Type": "application/json; charset=UTF-8"},
+				body: body
+			})
+			.then(res => {
+				if (!res.ok) {
+					if (callback) callback(null);
+					return null;
+				}
+				return res.json();
+			})
+			.then(json => {
+				if (callback) callback(json);
+			})
+			.catch((e) => {
+				console.error("requestJson error:", e);
+				if (callback) callback(null);
+			});
+		}
 		function checkUpdate() {
 			const statusDiv = gId("autoUpdateStatus");
+			if (!statusDiv) return;
 			statusDiv.innerHTML = "正在检查更新...";
-			requestJson({"checkUpdate": true}, function(obj) {
-				if (obj && obj.autoUpdate) {
+			requestJson({"autoUpdate": {"checkUpdate": true}}, function(obj) {
+				setTimeout(function() {
 					updateAutoUpdateStatus();
-				}
+				}, 1000);
 			});
 		}
 		function updateAutoUpdateStatus() {
 			requestJson(null, function(obj) {
 				if (obj && obj.autoUpdate) {
 					const statusDiv = gId("autoUpdateStatus");
+					if (!statusDiv) return;
 					let html = "<strong>状态:</strong> " + (obj.autoUpdate.status || "未知");
 					if (obj.autoUpdate.latestVersion) {
 						html += "<br><strong>最新版本:</strong> " + obj.autoUpdate.latestVersion;
