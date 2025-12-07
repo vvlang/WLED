@@ -781,6 +781,19 @@ bool checkAutoUpdate() {
   isAutoUpdateChecking = true;
   strcpy_P(autoUpdateStatus, PSTR("正在检查更新..."));
   
+  #ifdef ESP32
+  WiFiClientSecure client;
+  client.setInsecure(); // 跳过证书验证（简化实现）
+  client.setTimeout(15000);
+  client.stop();
+  
+  if (!client.connect("api.github.com", 443)) {
+    strcpy_P(autoUpdateStatus, PSTR("连接GitHub API失败"));
+    isAutoUpdateChecking = false;
+    return false;
+  }
+  #else
+  // ESP8266 不支持 HTTPS，使用 HTTP（不推荐，但作为后备方案）
   WiFiClient client;
   client.setTimeout(15000);
   client.stop();
@@ -790,6 +803,7 @@ bool checkAutoUpdate() {
     isAutoUpdateChecking = false;
     return false;
   }
+  #endif
 
   String url = "/repos/";
   url += autoUpdateRepoOwner;
