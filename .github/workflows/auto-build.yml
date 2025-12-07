@@ -55,8 +55,7 @@ jobs:
 
       - name: Verify PlatformIO installation
         run: |
-          python -m platformio --version || platformio --version || pio --version
-          which pio || which platformio || echo "PlatformIO not in PATH, using python -m platformio"
+          python -m platformio --version || echo "PlatformIO check failed"
 
       - name: Cache PlatformIO
         uses: actions/cache@v4
@@ -70,14 +69,7 @@ jobs:
             pio-${{ runner.os }}-esp32c3dev-${{ hashFiles('platformio.ini', 'pio-scripts/output_bins.py') }}-
 
       - name: Build firmware
-        run: |
-          if command -v pio &> /dev/null; then
-            pio run -e esp32c3dev
-          elif command -v platformio &> /dev/null; then
-            platformio run -e esp32c3dev
-          else
-            python -m platformio run -e esp32c3dev
-          fi
+        run: python -m platformio run -e esp32c3dev
 
       - name: Upload firmware artifact
         uses: actions/upload-artifact@v4
@@ -132,6 +124,10 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "Release $TAG does not exist, will create it"
           fi
+
+      - name: Install jq
+        if: steps.check_release.outputs.exists == 'true'
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Get existing release body
         id: existing_body
