@@ -17,20 +17,8 @@
 		function setBckFilename(x) {
 			x.setAttribute("download","wled_" + x.getAttribute("download") + (sd=="WLED"?"":("_" +sd)));
 		}
-		function S() {
-			getLoc();
-			if (loc) {
-				gId("bckcfg").setAttribute('href',getURL(gId("bckcfg").pathname));
-				gId("bckpresets").setAttribute('href',getURL(gId("bckpresets").pathname));
-			}
-			loadJS(getURL('/settings/s.js?p=6'), false, undefined, ()=>{
-				setBckFilename(gId("bckcfg"));
-				setBckFilename(gId("bckpresets"));
-				updateAutoUpdateStatus();
-			});	// If we set async false, file is loaded and executed, then next statement is processed
-			if (loc) d.Sf.action = getURL('/settings/sec');
-		}
-		function requestJson(command, callback) {
+		// 确保requestJson函数在全局作用域中定义，避免被其他脚本覆盖
+		window.requestJson = function(command, callback) {
 			var type = command ? 'POST' : 'GET';
 			var body = command ? JSON.stringify(command) : null;
 			fetch(getURL('/json/si'), {
@@ -52,6 +40,19 @@
 				console.error("requestJson error:", e);
 				if (callback) callback(null);
 			});
+		};
+		function S() {
+			getLoc();
+			if (loc) {
+				gId("bckcfg").setAttribute('href',getURL(gId("bckcfg").pathname));
+				gId("bckpresets").setAttribute('href',getURL(gId("bckpresets").pathname));
+			}
+			loadJS(getURL('/settings/s.js?p=6'), false, undefined, ()=>{
+				setBckFilename(gId("bckcfg"));
+				setBckFilename(gId("bckpresets"));
+				updateAutoUpdateStatus();
+			});	// If we set async false, file is loaded and executed, then next statement is processed
+			if (loc) d.Sf.action = getURL('/settings/sec');
 		}
 		var updateCheckInterval = null;
 		var updateCheckTimeout = null;
