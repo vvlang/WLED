@@ -877,6 +877,7 @@ bool checkAutoUpdate() {
     if (tagName.startsWith("v")) {
       tagName = tagName.substring(1);
     }
+    // 保存原始标签名用于显示
     strlcpy(autoUpdateLatestVersion, tagName.c_str(), sizeof(autoUpdateLatestVersion));
   } else {
     strcpy_P(autoUpdateStatus, PSTR("未找到版本信息"));
@@ -907,23 +908,48 @@ bool checkAutoUpdate() {
   }
 
   // 比较版本号
-  char currentVerStr[16];
-  snprintf_P(currentVerStr, sizeof(currentVerStr), PSTR("%d"), VERSION);
-  
-  // 简化版本比较：假设版本格式为 yymmddb (例如: 2506160)
+  // 当前版本格式：yymmddb (例如: 2506160 = 2025年6月16日构建0)
   uint32_t currentVer = VERSION;
+  
+  // GitHub Release标签格式：v2025.12.07-0 或 2025.12.07-0
+  // 需要转换为 yymmddb 格式进行比较
+  String latestTag = String(autoUpdateLatestVersion);
   uint32_t latestVer = 0;
   
-  // 尝试解析版本号（可能是数字格式或x.y.z格式）
-  if (strlen(autoUpdateLatestVersion) == 7) {
-    latestVer = atoi(autoUpdateLatestVersion);
-  } else {
-    // 标准版本号格式 (x.y.z) - 转换为数字格式进行比较
-    // 这里简化处理，只比较主要版本号
-    latestVer = atoi(autoUpdateLatestVersion);
+  // 尝试解析版本号
+  // 格式1: 纯数字 (7位，如 2506160)
+  if (latestTag.length() == 7 && latestTag.toInt() > 0) {
+    latestVer = latestTag.toInt();
+  }
+  // 格式2: YYYY.MM.DD-B (如 2025.12.07-0) -> 转换为 yymmddb
+  else if (latestTag.indexOf('.') > 0) {
+    int firstDot = latestTag.indexOf('.');
+    int secondDot = latestTag.indexOf('.', firstDot + 1);
+    int dash = latestTag.indexOf('-', secondDot + 1);
+    
+    if (firstDot > 0 && secondDot > firstDot) {
+      int year = latestTag.substring(0, firstDot).toInt();
+      int month = latestTag.substring(firstDot + 1, secondDot).toInt();
+      int day = (dash > 0) ? latestTag.substring(secondDot + 1, dash).toInt() : latestTag.substring(secondDot + 1).toInt();
+      int build = (dash > 0) ? latestTag.substring(dash + 1).toInt() : 0;
+      
+      // 转换为 yymmddb 格式
+      if (year >= 2000 && year < 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
+        int yy = year - 2000;
+        latestVer = yy * 100000 + month * 1000 + day * 10 + build;
+      }
+    }
+  }
+  // 格式3: 其他格式，尝试直接转换为整数
+  else {
+    latestVer = latestTag.toInt();
   }
   
-  if (latestVer > currentVer) {
+  // 比较版本
+  if (latestVer == 0) {
+    // 无法解析版本号，但找到了固件文件，显示标签名
+    snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("找到版本: %s (无法比较)"), autoUpdateLatestVersion);
+  } else if (latestVer > currentVer) {
     // 发现新版本
     snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("发现新版本: %s (当前: %d)"), autoUpdateLatestVersion, VERSION);
     
@@ -934,7 +960,7 @@ bool checkAutoUpdate() {
   } else if (latestVer == currentVer) {
     snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("已是最新版本: %d"), VERSION);
   } else {
-    snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("当前版本更新: %d"), VERSION);
+    snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("当前版本更新: %d (最新: %s)"), VERSION, autoUpdateLatestVersion);
   }
 
   isAutoUpdateChecking = false;
