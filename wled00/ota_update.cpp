@@ -1007,11 +1007,36 @@ bool downloadAutoUpdate() {
   String host = url.substring(0, slashPos);
   String path = url.substring(slashPos);
   
+  // 判断是否为 HTTPS URL
+  bool isHttps = (strncmp(autoUpdateFirmwareUrl, "https", 5) == 0);
+  
+  #ifdef ESP32
+  WiFiClientSecure clientSecure;
+  WiFiClient clientHttp;
+  WiFiClient* client;
+  
+  if (isHttps) {
+    clientSecure.setInsecure(); // 跳过证书验证（简化实现）
+    clientSecure.setTimeout(30000);
+    clientSecure.stop();
+    client = &clientSecure;
+  } else {
+    clientHttp.setTimeout(30000);
+    clientHttp.stop();
+    client = &clientHttp;
+  }
+  #else
   WiFiClient client;
   client.setTimeout(30000);
   client.stop();
+  #endif
   
-  if (!client.connect(host.c_str(), 80)) {
+  int port = isHttps ? 443 : 80;
+  #ifdef ESP32
+  if (!client->connect(host.c_str(), port)) {
+  #else
+  if (!client.connect(host.c_str(), port)) {
+  #endif
     strcpy_P(autoUpdateStatus, PSTR("连接下载服务器失败"));
     isAutoUpdateDownloading = false;
     return false;
@@ -1023,19 +1048,35 @@ bool downloadAutoUpdate() {
   request += "User-Agent: WLED-AutoUpdate\r\n";
   request += "\r\n";
 
+  #ifdef ESP32
+  if (client->print(request) == 0) {
+  #else
   if (client.print(request) == 0) {
+  #endif
     strcpy_P(autoUpdateStatus, PSTR("发送下载请求失败"));
+    #ifdef ESP32
+    client->stop();
+    #else
     client.stop();
+    #endif
     isAutoUpdateDownloading = false;
     return false;
   }
 
   // 等待响应
   unsigned long timeout = millis();
+  #ifdef ESP32
+  while (client->available() == 0) {
+  #else
   while (client.available() == 0) {
+  #endif
     if (millis() - timeout > 30000) {
       strcpy_P(autoUpdateStatus, PSTR("下载响应超时"));
+      #ifdef ESP32
+      client->stop();
+      #else
       client.stop();
+      #endif
       isAutoUpdateDownloading = false;
       return false;
     }
@@ -1045,8 +1086,13 @@ bool downloadAutoUpdate() {
   // 读取HTTP响应头
   String header = "";
   size_t contentLength = 0;
+  #ifdef ESP32
+  while (client->available()) {
+    String line = client->readStringUntil('\n');
+  #else
   while (client.available()) {
     String line = client.readStringUntil('\n');
+  #endif
     line.trim();
     if (line.length() == 0) break;
     
@@ -1059,14 +1105,22 @@ bool downloadAutoUpdate() {
   // 检查HTTP状态码
   if (header.indexOf("HTTP/1.1 200") < 0 && header.indexOf("HTTP/1.0 200") < 0) {
     strcpy_P(autoUpdateStatus, PSTR("下载失败"));
+    #ifdef ESP32
+    client->stop();
+    #else
     client.stop();
+    #endif
     isAutoUpdateDownloading = false;
     return false;
   }
 
   if (contentLength == 0) {
     strcpy_P(autoUpdateStatus, PSTR("无法确定文件大小"));
+    #ifdef ESP32
+    client->stop();
+    #else
     client.stop();
+    #endif
     isAutoUpdateDownloading = false;
     return false;
   }
@@ -1078,7 +1132,11 @@ bool downloadAutoUpdate() {
 
   if (!Update.begin(contentLength)) {
     snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("OTA初始化失败: %s"), Update.errorString());
+    #ifdef ESP32
+    client->stop();
+    #else
     client.stop();
+    #endif
     isAutoUpdateDownloading = false;
     return false;
   }
@@ -1088,9 +1146,15 @@ bool downloadAutoUpdate() {
   uint8_t buffer[512];
   timeout = millis();
   
+  #ifdef ESP32
+  while (client->connected() || client->available()) {
+    if (client->available()) {
+      size_t len = client->readBytes(buffer, sizeof(buffer));
+  #else
   while (client.connected() || client.available()) {
     if (client.available()) {
       size_t len = client.readBytes(buffer, sizeof(buffer));
+  #endif
       if (len > 0) {
         if (Update.write(buffer, len) != len) {
           snprintf_P(autoUpdateStatus, sizeof(autoUpdateStatus), PSTR("OTA写入失败: %s"), Update.errorString());
