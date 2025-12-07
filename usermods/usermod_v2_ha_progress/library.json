@@ -1,0 +1,6 @@
+{
+  "name": "usermod_v2_ha_progress",
+  "build": { "libArchive": false },
+  "dependencies": {}
+}
+
