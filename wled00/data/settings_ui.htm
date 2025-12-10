@@ -3,49 +3,59 @@
 <head>
 	<meta charset="utf-8">
 	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-	<title>用户界面设置</title>
+	<title data-i18n="uiSettings">用户界面设置</title>
 	<script src="common.js" type="text/javascript"></script>
 	<script>
 	var initial_ds, initial_st, initial_su, oldUrl;
 	var sett = null;
-	var l = {
-		"comp":{
-			"labels":"显示按钮标签",
-			"colors":{
-				"LABEL":"颜色选择方法",
-				"picker": "颜色轮",
-				"rgb": "RGB滑块",
-				"quick": "快速颜色选择器",
-				"hex": "HEX颜色输入"
-				},
-			"pcmbot": "在PC模式下显示底部标签栏",
-			"pid": "显示预设ID",
-			"seglen": "设置段长度而不是停止LED",
-			"segpwr": "隐藏段功率和亮度",
-			"segexp" : "始终展开第一段",
-			"css": "启用自定义CSS",
-			"hdays": "启用自定义节假日列表",
-			"fxdef": "使用效果默认参数",
-			"on": "电源按钮预设覆盖(开启)",
-			"off": "电源按钮预设覆盖(关闭)",
-			"idsort": "按ID排序预设"
-		},
-		"theme":{
-			"alpha": {
-				"bg":"背景不透明度",
-				"tab":"按钮不透明度"
-			},
-			"bg":{
-				"url":"背景图片URL",
-				"rnd":"随机背景图片",
-				"rndGrayscale":"灰度",
-				"rndBlur":"模糊"
-			},
-			"color":{
-				"bg":"背景HEX颜色"
-			}
-		}
+	// 默认配置结构
+	var defaultCfg = {
+		theme:{base:"dark", bg:{url:"", rnd: false, rndGrayscale: false, rndBlur: false}, alpha:{bg:0.6,tab:0.8}, color:{bg:""}},
+		comp :{colors:{picker: true, rgb: false, quick: true, hex: false},
+			  labels:true, pcmbot:false, pid:true, seglen:false, segpwr:false, segexp:false,
+			  css:true, hdays:false, fxdef:true, on:0, off:0, idsort: false}
 	};
+	function getLabels() {
+		return {
+			"comp":{
+				"labels": t('showButtonLabels'),
+				"colors":{
+					"LABEL": t('colorSelectionMethod'),
+					"picker": t('colorWheel'),
+					"rgb": t('rgbSliders'),
+					"quick": t('quickColorPicker'),
+					"hex": t('hexColorInput')
+					},
+				"pcmbot": t('showBottomBarInPCMode'),
+				"pid": t('showPresetID'),
+				"seglen": t('setSegmentLength'),
+				"segpwr": t('hideSegmentPower'),
+				"segexp" : t('alwaysExpandFirstSegment'),
+				"css": t('enableCustomCSS'),
+				"hdays": t('enableCustomHolidays'),
+				"fxdef": t('useEffectDefaults'),
+				"on": t('powerButtonPresetOn'),
+				"off": t('powerButtonPresetOff'),
+				"idsort": t('sortPresetsByID')
+			},
+			"theme":{
+				"alpha": {
+					"bg": t('backgroundOpacity'),
+					"tab": t('buttonOpacity')
+				},
+				"bg":{
+					"url": t('backgroundImageURL'),
+					"rnd": t('randomBackground'),
+					"rndGrayscale": t('grayscale'),
+					"rndBlur": t('blur')
+				},
+				"color":{
+					"bg": t('backgroundHEXColor')
+				}
+			}
+		};
+	}
+	var l = getLabels();
 	function set(path, obj, val) {
 		var tar = obj;
 		var pList = path.split('_');
@@ -100,30 +110,75 @@
 	}
 
 	function genForm(s) {
+		if (!s || typeof s !== 'object') {
+			s = {};
+		}
 		var str = "";
+		l = getLabels(); // 更新标签以反映当前语言
 		str = addRec(s,"",l);
 		oldUrl = "";
 		
-		gId('gen').innerHTML = str;
-		if (gId('theme_bg_rnd').checked) {
-			toggle("Image");
-		} else if (gId('theme_bg_url').value.startsWith('data:')) {
-			gId("bg_url").classList.add("hide");
-		} else oldUrl = gId("theme_bg_url").value;
+		// 更新innerHTML，即使str为空也要更新（可能是空对象）
+		gId('gen').innerHTML = str || '';
+		// 应用翻译到新生成的元素
+		if (typeof applyTranslations === 'function') applyTranslations();
+		// 延迟执行这些操作，确保DOM已更新
+		setTimeout(function() {
+			if (gId('theme_bg_rnd')) {
+				if (gId('theme_bg_rnd').checked) {
+					toggle("Image");
+				} else if (gId('theme_bg_url') && gId('theme_bg_url').value.startsWith('data:')) {
+					gId("bg_url").classList.add("hide");
+				} else if (gId('theme_bg_url')) {
+					oldUrl = gId("theme_bg_url").value;
+				}
+			}
+		}, 10);
 	}
 	function GetLS()
 	{
-		sett = localStorage.getItem('wledUiCfg');
-		if (!sett) gId('lserr').style.display = "inline";
-		try {
-			sett = JSON.parse(sett);
-		} catch (e) {
-			sett = {};
-			gId('lserr').style.display = "inline";
-			gId('lserr').innerHTML = "&#9888; 设置JSON解析失败。(" + e + ")";
+		var stored = localStorage.getItem('wledUiCfg');
+		if (!stored) {
+			// 如果localStorage中没有配置，使用默认配置
+			sett = JSON.parse(JSON.stringify(defaultCfg));
+		} else {
+			try {
+				sett = JSON.parse(stored);
+				if (!sett || typeof sett !== 'object') {
+					sett = JSON.parse(JSON.stringify(defaultCfg));
+				} else {
+					// 合并默认配置，确保所有字段都存在
+					sett = mergeDeep(JSON.parse(JSON.stringify(defaultCfg)), sett);
+				}
+			} catch (e) {
+				sett = JSON.parse(JSON.stringify(defaultCfg));
+				gId('lserr').style.display = "inline";
+				gId('lserr').innerHTML = "&#9888; " + t('settingsJSONParseFailed') + " (" + e + ")";
+			}
 		}
+		l = getLabels(); // 更新标签以反映当前语言
 		genForm(sett);
-		gId('dm').checked = (gId('theme_base').value === 'light');
+		// 延迟执行以确保DOM已更新
+		setTimeout(function() {
+			if (gId('dm')) {
+				gId('dm').checked = (gId('theme_base') && gId('theme_base').value === 'light');
+			}
+		}, 10);
+	}
+	
+	// 深度合并对象函数
+	function mergeDeep(target, source) {
+		if (!source || typeof source !== 'object') return target;
+		if (!target || typeof target !== 'object') return source;
+		var output = Object.assign({}, target);
+		Object.keys(source).forEach(key => {
+			if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+				output[key] = mergeDeep(target[key] || {}, source[key]);
+			} else {
+				output[key] = source[key];
+			}
+		});
+		return output;
 	}
 
 	function SetLS()
@@ -141,7 +196,7 @@
 		} catch (e) {
 			gId('lssuc').style.display = "none";
 			gId('lserr').style.display = "inline";
-			gId('lserr').innerHTML = "&#9888; 设置JSON保存失败。(" + e + ")";
+			gId('lserr').innerHTML = "&#9888; " + t('settingsJSONSaveFailed') + " (" + e + ")";
 		}
 	}
 
@@ -150,7 +205,7 @@
 		localStorage.removeItem('wledP');
 		localStorage.removeItem('wledPmt');
 		localStorage.removeItem('wledPalx');
-		showToast("已清除。");
+		showToast(t('cleared'));
 	}
 	
 	function Save() {
@@ -158,8 +213,50 @@
 		if (d.Sf.DS.value != initial_ds || /*d.Sf.ST.checked != initial_st ||*/ d.Sf.SU.checked != initial_su) d.Sf.submit();
 	}
 	
+	// 保存原始的toggleLanguage函数
+	var originalToggleLanguage = window.toggleLanguage;
+	// 重写toggleLanguage函数以在切换语言后重新生成表单
+	window.toggleLanguage = function() {
+		if (originalToggleLanguage) originalToggleLanguage();
+		// 如果表单已生成，重新生成以更新标签
+		// 延迟执行以确保原始函数完成和DOM更新
+		setTimeout(function() {
+			if (typeof genForm === 'function') {
+				// 如果sett已经存在，直接重新生成表单
+				if (sett !== null && sett !== undefined && typeof sett === 'object') {
+					// 确保sett有默认结构
+					if (Object.keys(sett).length === 0) {
+						sett = JSON.parse(JSON.stringify(defaultCfg));
+					} else {
+						// 合并默认配置，确保所有字段都存在
+						sett = mergeDeep(JSON.parse(JSON.stringify(defaultCfg)), sett);
+					}
+					l = getLabels();
+					genForm(sett);
+				} else if (typeof GetLS === 'function') {
+					// 如果sett不存在，重新加载设置
+					GetLS();
+				}
+			}
+		}, 150);
+	};
+	
 	function S() {
 		getLoc();
+		// 初始化语言切换按钮
+		initLangToggle();
+		// 应用翻译
+		applyTranslations();
+		// 更新title标签
+		var titleEl = d.querySelector('title[data-i18n]');
+		if (titleEl) {
+			var key = titleEl.getAttribute('data-i18n');
+			if (typeof t === 'function') {
+				titleEl.textContent = t(key);
+			}
+		}
+		// 更新标签对象
+		l = getLabels();
 		loadJS(getURL('/settings/s.js?p=3'), false, undefined, ()=>{
 			initial_ds = d.Sf.DS.value;
 			//initial_st = d.Sf.ST.checked;
@@ -214,21 +311,21 @@
 	<form id="form_s" name="Sf" method="post">
 		<div class="toprow">
 		<div class="helpB"><button type="button" onclick="H('features/settings/#user-interface-settings')">?</button></div>
-		<button type="button" onclick="B()">返回</button><button type="button" onclick="Save()">保存</button><br>
-		<span id="lssuc" style="color:green; display:none">&#10004; 本地UI设置已保存！</span>
-		<span id="lserr" style="color:red; display:none">&#9888; 无法访问本地存储。请确保在浏览器中启用了它。</span><hr>
+		<button type="button" onclick="B()" data-i18n="back">返回</button><button type="button" onclick="Save()" data-i18n="save">保存</button>
+		<button type="button" id="langToggle" onclick="toggleLanguage()" style="background: rgba(255,255,255,0.1); border: none; color: var(--c-t); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 8px;">EN</button>
+		<br>
+		<span id="lssuc" style="color:green; display:none" data-i18n="localUISettingsSaved">&#10004; 本地UI设置已保存！</span>
+		<span id="lserr" style="color:red; display:none" data-i18n="cannotAccessLocalStorage">&#9888; 无法访问本地存储。请确保在浏览器中启用了它。</span><hr>
 		</div>
-		<h2>Web设置</h2>
-		服务器描述: <input type="text" name="DS" maxlength="32"><br>
+		<h2 data-i18n="uiSettings">用户界面设置</h2>
+		<span data-i18n="serverDescription">服务器描述</span>: <input type="text" name="DS" maxlength="32"><br>
 		<!-- Sync button toggles both send and receive: <input type="checkbox" name="ST"><br> -->
-		启用简化UI: <input type="checkbox" name="SU"><br>
-		<i>以下UI自定义设置对于WLED设备和此浏览器都是唯一的。<br>
-		如果使用不同的浏览器、设备或WLED IP地址，您需要重新设置它们。<br>
-		刷新主UI以应用更改。</i><br>
+		<span data-i18n="enableSimplifiedUI">启用简化UI</span>: <input type="checkbox" name="SU"><br>
+		<i data-i18n="uiCustomNote">以下UI自定义设置对于WLED设备和此浏览器都是唯一的。<br>如果使用不同的浏览器、设备或WLED IP地址，您需要重新设置它们。<br>刷新主UI以应用更改。</i><br>
 		
-		<div id="gen">正在加载设置...</div>
+		<div id="gen" data-i18n="loadingSettings">正在加载设置...</div>
 		
-		<h3>UI外观</h3>
+		<h3 data-i18n="uiAppearance">UI外观</h3>
 		<span class="l"></span>: <input type="checkbox" id="comp_labels" class="agi cb"><br>
 		<span class="l"></span>: <input type="checkbox" id="comp_pcmbot" class="agi cb"><br>
 		<span class="l"></span>: <input type="checkbox" id="comp_pid" class="agi cb"><br>
@@ -239,12 +336,12 @@
 		<span class="l"></span>: <input type="number" min=0 max=250 step=1 id="comp_on" class="agi"><br>
 		<span class="l"></span>: <input type="number" min=0 max=250 step=1 id="comp_off" class="agi"><br>
 		<span class="l"></span>: <input type="checkbox" id="comp_idsort" class="agi cb"><br>
-		我讨厌暗色模式: <input type="checkbox" id="dm" onchange="UI()"><br>
-		<span id="idonthateyou" style="display:none"><i>为什么？ </i>&#x1F97A;<br></span>
+		<span data-i18n="hateDarkMode">我讨厌暗色模式</span>: <input type="checkbox" id="dm" onchange="UI()"><br>
+		<span id="idonthateyou" style="display:none"><i data-i18n="why">为什么？</i> &#x1F97A;<br></span>
 		<span class="l"></span>: <input type="number" min=0.0 max=1.0 step=0.01 id="theme_alpha_tab" class="agi"><br>
 		<span class="l"></span>: <input type="number" min=0.0 max=1.0 step=0.01 id="theme_alpha_bg" class="agi"><br>
 		<span class="l"></span>: <input type="text" id="theme_color_bg" maxlength="9" class="agi"><br>
-		背景图片: <input type="file" id="theme_bg_img" accept="image/*" onchange="ownBg(this)"> <input type="button" value="移除" onclick="removeBgImg()"><br>
+		<span data-i18n="backgroundImage">背景图片</span>: <input type="file" id="theme_bg_img" accept="image/*" onchange="ownBg(this)"> <input type="button" value="" data-i18n="remove" onclick="removeBgImg()"><br>
 		<span class="l"></span>: <input type="checkbox" id="theme_bg_rnd" class="agi cb" onchange="randomBg();toggle('Image');">
 		<div id="Image">
 			<div id="bg_url">
@@ -252,18 +349,18 @@
 			</div>
 		</div>
 		<div id="NoImage" class="hide">
-			<h4>随机背景图片设置</h4>
+			<h4 data-i18n="randomBackgroundSettings">随机背景图片设置</h4>
 			<span class="l"></span>: <input type="checkbox" id="theme_bg_rndGrayscale" class="agi cb" onchange="randomBg()"><br>
 			<span class="l"></span>: <input type="checkbox" id="theme_bg_rndBlur" class="agi cb" onchange="randomBg()"><br>
 		</div>
 		<input id="theme_base" class="agi" style="display:none">
 		<span class="l"></span>: <input type="checkbox" id="comp_css" class="agi cb"><br>
-		<div id="skin">自定义CSS: <input type="file" name="data" accept=".css"> <input type="button" value="上传" onclick="uploadFile(d.Sf.data,'/skin.css');"><br></div>
+		<div id="skin"><span data-i18n="customCSS">自定义CSS</span>: <input type="file" name="data" accept=".css"> <input type="button" value="" data-i18n="upload" onclick="uploadFile(d.Sf.data,'/skin.css');"><br></div>
 		<span class="l"></span>: <input type="checkbox" id="comp_hdays" class="agi cb"><br>
-		<div id="holidays">节假日: <input type="file" name="data2" accept=".json"> <input type="button" value="上传" onclick="uploadFile(d.Sf.data2,'/holidays.json');"><br></div>
+		<div id="holidays"><span data-i18n="holidays">节假日</span>: <input type="file" name="data2" accept=".json"> <input type="button" value="" data-i18n="upload" onclick="uploadFile(d.Sf.data2,'/holidays.json');"><br></div>
 		<div id="toast"></div>
-		<hr><button type="button" onclick="cLS()">清除本地存储</button>
-		<hr><button type="button" onclick="B()">返回</button><button type="button" onclick="Save()">保存</button>
+		<hr><button type="button" onclick="cLS()" data-i18n="clearLocalStorage">清除本地存储</button>
+		<hr><button type="button" onclick="B()" data-i18n="back">返回</button><button type="button" onclick="Save()" data-i18n="save">保存</button>
 	</form>
 </body>
 </html>

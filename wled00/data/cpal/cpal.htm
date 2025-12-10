@@ -125,7 +125,7 @@
         <rect style="fill: #03F" x="18" y="10" width="4" height="8"/>
         <rect style="fill: #03F" x="22" y="6" width="8" height="4"/>
       </svg>
-      <span id="head">WLED 调色板编辑器</span>
+      <span id="head" data-i18n="customPaletteEditor">WLED 调色板编辑器</span>
     </h1>
   </div>
 
@@ -134,17 +134,17 @@
     <div id="pals" class="pMain">
       <div id="distDiv" class="pTop"></div>
       <div id="memWarn" class="pTop" style="display:none; color:#ff6600; margin-bottom:8px; font-size:16px;">
-        警告: 添加许多自定义调色板可能会导致稳定性问题，请先创建<a href="/settings/sec#backup" style="color:#ff9900">备份</a>。</div>
-      <div id="pTop" class="pTop">自定义调色板</div>
+        <span data-i18n="warningManyPalettes">警告: 添加许多自定义调色板可能会导致稳定性问题，请先创建</span><a href="/settings/sec#backup" style="color:#ff9900" data-i18n="backup">备份</a><span data-i18n="first">。</span></div>
+      <div id="pTop" class="pTop" data-i18n="customPalette">自定义调色板</div>
     </div>
   </div>
 
   <div style="display: flex; justify-content: center;">
-    <div id="info">点击渐变添加。方框 = 颜色。红色 = 删除。箭头 = 上传。铅笔 = 编辑。</div>
+    <div id="info" data-i18n="clickGradientToAdd">点击渐变添加。方框 = 颜色。红色 = 删除。箭头 = 上传。铅笔 = 编辑。</div>
   </div>
   <div style="display: flex; justify-content: center;">
     <div id="sPals" class="pMain">
-        <div id="spTop" class="pTop">静态调色板</div>
+        <div id="spTop" class="pTop" data-i18n="staticPalette">静态调色板</div>
     </div>
   </div>
 </body>
@@ -467,7 +467,7 @@
 
     const wledPalx = JSON.parse(localStorage.getItem('wledPalx'));
     if (!wledPalx) {
-      alert("调色板缓存从浏览器中丢失。请先返回主页面。","缺少缓存！")
+      alert(t('paletteCacheMissing'), t('missingCache'))
     } else {
       for (const key in wledPalx.p) {
         wledPalx.p[key].name = palNm[key];
@@ -510,6 +510,8 @@
 
       palArr.push( ...pArray);
     }
+    // 应用翻译
+    applyTranslations();
     genPalDivs();
   }
 

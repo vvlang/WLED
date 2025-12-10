@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
-	<title>2D 设置</title>
+	<title data-i18n="config2DTitle">2D 设置</title>
 	<script src="common.js" type="text/javascript"></script>
 	<script>
 	var maxPanels=64;
@@ -11,9 +11,23 @@
 	function fS(){d.Sf.submit();} // <button type=submit> sometimes didn't work
 	function S() {
 		getLoc();
+		// 初始化语言切换按钮
+		initLangToggle();
+		// 应用翻译
+		applyTranslations();
+		// 更新title标签
+		var titleEl = d.querySelector('title[data-i18n]');
+		if (titleEl) {
+			var key = titleEl.getAttribute('data-i18n');
+			if (typeof t === 'function') {
+				titleEl.textContent = t(key);
+			}
+		}
 		loadJS(getURL('/settings/s.js?p=10'), false, undefined, ()=>{
 			UI();
 			Sf.MPC.setAttribute("max",maxPanels);
+			// 应用翻译到动态生成的元素
+			if (typeof applyTranslations === 'function') applyTranslations();
 		});	// If we set async false, file is loaded and executed, then next statement is processed
 		if (loc) d.Sf.action = getURL('/settings/2D');
 	}
@@ -40,25 +54,27 @@
 		if (p.children.length >= maxPanels) return;
 		var pw = parseInt(d.Sf.PW.value);
 		var ph = parseInt(d.Sf.PH.value);
-		let b = `<div id="pnl${i}"><hr class="sml">面板 ${i}<br>
-第一个LED: <select name="P${i}B" oninput="UI()">
-	<option value="0">顶部</option>
-	<option value="1">底部</option>
+			let b = `<div id="pnl${i}"><hr class="sml"><span data-i18n="panel">面板</span> ${i}<br>
+<span data-i18n="firstLED">第一个LED</span>: <select name="P${i}B" oninput="UI()">
+	<option value="0" data-i18n="top">顶部</option>
+	<option value="1" data-i18n="bottom">底部</option>
 </select><select name="P${i}R" oninput="UI()">
-	<option value="0">左侧</option>
-	<option value="1">右侧</option>
+	<option value="0" data-i18n="left">左侧</option>
+	<option value="1" data-i18n="right">右侧</option>
 </select><br>
-方向: <select name="P${i}V" oninput="UI()">
-	<option value="0">水平</option>
-	<option value="1">垂直</option>
+<span data-i18n="direction">方向</span>: <select name="P${i}V" oninput="UI()">
+	<option value="0" data-i18n="horizontal">水平</option>
+	<option value="1" data-i18n="vertical">垂直</option>
 </select><br>
-蛇形: <input type="checkbox" name="P${i}S" oninput="UI()"><br>
-尺寸 (宽x高): <input name="P${i}W" type="number" min="1" max="255" value="${pw}" oninput="UI()"> x <input name="P${i}H" type="number" min="1" max="255" value="${ph}" oninput="UI()"><br>
-偏移 X: <input name="P${i}X" type="number" min="0" max="255" value="0" oninput="UI()">
-Y: <input name="P${i}Y" type="number" min="0" max="255" value="0" oninput="UI()"><br><i>(从左上角开始的LED数量偏移)</i>
+<span data-i18n="snake">蛇形</span>: <input type="checkbox" name="P${i}S" oninput="UI()"><br>
+<span data-i18n="size">尺寸 (宽x高)</span>: <input name="P${i}W" type="number" min="1" max="255" value="${pw}" oninput="UI()"> x <input name="P${i}H" type="number" min="1" max="255" value="${ph}" oninput="UI()"><br>
+<span data-i18n="offsetX">偏移 X</span>: <input name="P${i}X" type="number" min="0" max="255" value="0" oninput="UI()">
+<span data-i18n="offsetYLabel">Y</span>: <input name="P${i}Y" type="number" min="0" max="255" value="0" oninput="UI()"><br><i data-i18n="offsetDescription">(从左上角开始的LED数量偏移)</i>
 </div>`;
-		p.insertAdjacentHTML("beforeend", b);
-	}
+			p.insertAdjacentHTML("beforeend", b);
+			// 应用翻译到新添加的元素
+			if (typeof applyTranslations === 'function') applyTranslations();
+		}
 
 	function remPanel() {
 		let p = gId("panels").children;
@@ -235,7 +251,7 @@ Y: <input name="P${i}Y" type="number" min="0" max="255" value="0" oninput="UI()"
 			ctx.fillStyle = "orange";
 			ctx.fillText(p, topLeftX + pw/2*ppL - 10, topLeftY + ph/2*ppL + 10);
 		}
-		gId("MD").innerHTML = "矩阵尺寸 (宽*高=LED数): " + maxWidth + " x " + maxHeight + " = " + maxWidth * maxHeight;
+		gId("MD").innerHTML = t('matrixSize') + ": " + maxWidth + " x " + maxHeight + " = " + maxWidth * maxHeight;
 	}
 	</script>
 	<style>@import url("style.css");</style>
@@ -244,54 +260,53 @@ Y: <input name="P${i}Y" type="number" min="0" max="255" value="0" oninput="UI()"
 	<form id="form_s" name="Sf" method="post">
 	<div class="toprow">
 		<div class="helpB"><button type="button" onclick="H('features/2D')">?</button></div>
-		<button type="button" onclick="B()">返回</button><button type="button" onclick="fS()">保存</button><hr>
+		<button type="button" onclick="B()" data-i18n="back">返回</button><button type="button" onclick="fS()" data-i18n="save">保存</button>
+		<button type="button" id="langToggle" onclick="toggleLanguage()" style="background: rgba(255,255,255,0.1); border: none; color: var(--c-t); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 8px;">EN</button>
+		<hr>
 	</div>
-	<h2>2D 设置</h2>
-	灯带或面板:
+	<h2 data-i18n="config2DTitle">2D 设置</h2>
+	<span data-i18n="stripOrPanel">灯带或面板</span>:
 	<select id="somp" name="SOMP" onchange="resetPanels();addPanels();UI();" >
-		<option value="0">1D 灯带</option>
-		<option value="1">2D 矩阵</option>
+		<option value="0" data-i18n="ledStrip1D">1D 灯带</option>
+		<option value="1" data-i18n="matrix2D">2D 矩阵</option>
 	</select><br>
 	<div id="mpdiv" style="display:none;">
 		<hr class="sml">
-		<h3>矩阵生成器 <button type="button" id="expGen" onclick="expand(this,gId('mxGen'));">&gt;</button></h3>
+		<h3><span data-i18n="matrixGenerator">矩阵生成器</span> <button type="button" id="expGen" onclick="expand(this,gId('mxGen'));">&gt;</button></h3>
 		<div id="mxGen" style="display:none;">
-			面板尺寸 (宽x高): <input name="PW" type="number" min="1" max="128" value="8"> x <input name="PH" type="number" min="1" max="128" value="8"><br>
-			水平面板数: <input name="MPH" type="number" min="1" max="8" value="1">
-			垂直面板数: <input name="MPV" type="number" min="1" max="8" value="1"><br>
-			第一个面板: <select name="PB">
-				<option value="0">顶部</option>
-				<option value="1">底部</option>
+			<span data-i18n="panelSize">面板尺寸 (宽x高)</span>: <input name="PW" type="number" min="1" max="128" value="8"> x <input name="PH" type="number" min="1" max="128" value="8"><br>
+			<span data-i18n="horizontalPanels">水平面板数</span>: <input name="MPH" type="number" min="1" max="8" value="1">
+			<span data-i18n="verticalPanels">垂直面板数</span>: <input name="MPV" type="number" min="1" max="8" value="1"><br>
+			<span data-i18n="firstPanel">第一个面板</span>: <select name="PB">
+				<option value="0" data-i18n="top">顶部</option>
+				<option value="1" data-i18n="bottom">底部</option>
 			</select><select name="PR">
-				<option value="0">左侧</option>
-				<option value="1">右侧</option>
+				<option value="0" data-i18n="left">左侧</option>
+				<option value="1" data-i18n="right">右侧</option>
 			</select><br>
-			方向: <select name="PV">
-				<option value="0">水平</option>
-				<option value="1">垂直</option>
+			<span data-i18n="direction">方向</span>: <select name="PV">
+				<option value="0" data-i18n="horizontal">水平</option>
+				<option value="1" data-i18n="vertical">垂直</option>
 			</select><br>
-			蛇形: <input type="checkbox" name="PS"><br>
-			<i  class="warn">按"填充"将创建预排列矩阵的LED面板布局。<br>上面的值<i>不会</i>影响最终布局。<br>
-				警告: 生成后您可能需要更新每个面板的参数。</i><br>
-			<button type="button" onclick="gen();expand(gId('expGen'),gId('mxGen'));">填充</button>
+			<span data-i18n="snake">蛇形</span>: <input type="checkbox" name="PS"><br>
+			<i class="warn" data-i18n="matrixGeneratorWarning">按"填充"将创建预排列矩阵的LED面板布局。<br>上面的值<i>不会</i>影响最终布局。<br>警告: 生成后您可能需要更新每个面板的参数。</i><br>
+			<button type="button" onclick="gen();expand(gId('expGen'),gId('mxGen'));" data-i18n="fill">填充</button>
 		</div>
 		<hr class="sml">
-		<h3>面板设置</h3>
-		面板数量: <input name="MPC" type="number" min="1" max="64" value="1" oninput="addPanels();UI();"><br>
-		<i>矩阵由1个或多个物理LED面板组成。<br>
-		每个面板可以有不同的尺寸和/或不同的LED方向和/或起始点和/或布局。</i><br>
-		<h3>LED面板布局</h3>
+		<h3 data-i18n="panelSettings">面板设置</h3>
+		<span data-i18n="panelCount">面板数量</span>: <input name="MPC" type="number" min="1" max="64" value="1" oninput="addPanels();UI();"><br>
+		<i data-i18n="panelDescription">矩阵由1个或多个物理LED面板组成。<br>每个面板可以有不同的尺寸和/或不同的LED方向和/或起始点和/或布局。</i><br>
+		<h3 data-i18n="ledPanelLayout">LED面板布局</h3>
 		<div id="panels">
 		</div>
 		<hr class="sml">
 		<div id="MD"></div>
 		<canvas id="canvas"></canvas>
-		<div id="json" >间隙文件: <input type="file" name="data" accept=".json"><button type="button" class="sml" onclick="uploadFile(d.Sf.data,'/2d-gaps.json')">上传</button></div>
-		<i>注意: 间隙文件是一个<b>.json</b>文件，包含一个元素数量等于矩阵大小的数组。<br>
-			值-1表示该位置的像素缺失，值0表示永远不绘制该像素，值1表示常规像素。</i>
+		<div id="json" ><span data-i18n="gapFile">间隙文件</span>: <input type="file" name="data" accept=".json"><button type="button" class="sml" onclick="uploadFile(d.Sf.data,'/2d-gaps.json')" data-i18n="upload">上传</button></div>
+		<i data-i18n="gapFileNote">注意: 间隙文件是一个<b>.json</b>文件，包含一个元素数量等于矩阵大小的数组。<br>值-1表示该位置的像素缺失，值0表示永远不绘制该像素，值1表示常规像素。</i>
 	</div>
 	<hr>
-	<button type="button" onclick="B()">返回</button><button type="button" onclick="fS()">保存</button>
+	<button type="button" onclick="B()" data-i18n="back">返回</button><button type="button" onclick="fS()" data-i18n="save">保存</button>
 	</form>
 	<div id="toast"></div>
 </body>

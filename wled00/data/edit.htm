@@ -190,17 +190,17 @@ function createTop(element, editor){
 	path.type = "text";
 	path.maxLength = "31"; // limit filename length
 
-	var uploadBtn = cE("button"); uploadBtn.className = "sml"; uploadBtn.innerHTML = "上传文件";
-	var clearBtn = cE("button"); clearBtn.className = "sml"; clearBtn.innerHTML = "清除";
-	var saveBtn = cE("button"); saveBtn.className = "sml"; saveBtn.innerHTML = "保存";
-	var backBtn = cE("button"); backBtn.className = "sml"; backBtn.innerHTML = "返回控制"; backBtn.onclick = function(){ window.location.href = getURL("/"); };
+	var uploadBtn = cE("button"); uploadBtn.className = "sml"; uploadBtn.innerHTML = t('uploadFile');
+	var clearBtn = cE("button"); clearBtn.className = "sml"; clearBtn.innerHTML = t('clear');
+	var saveBtn = cE("button"); saveBtn.className = "sml"; saveBtn.innerHTML = t('save');
+	var backBtn = cE("button"); backBtn.className = "sml"; backBtn.innerHTML = t('returnToControl'); backBtn.onclick = function(){ window.location.href = getURL("/"); };
 
 	// Add elements to Top
 	leftDiv.appendChild(path);
 	leftDiv.appendChild(clearBtn);
 	leftDiv.appendChild(saveBtn);
 	leftDiv.appendChild(uploadBtn);
-	centerDiv.innerHTML = "WLED 文件编辑器";
+	centerDiv.innerHTML = t('fileEditor');
 	rightDiv.appendChild(backBtn);
 	gId(element).appendChild(input);
 	gId(element).appendChild(leftDiv);
@@ -212,9 +212,9 @@ function createTop(element, editor){
 	uploadBtn.onclick = function() { input.click(); }; // invokes file selector
 
 	function httpPostCb(st,resp){
-		if (st!=200) alert("错误 "+st+": "+resp);
+		if (st!=200) alert(t('error') + " "+st+": "+resp);
 		else {
-			showToast("上传成功！");
+			showToast(t('uploadSuccess'));
 			refreshTree();
 		}
 	}
@@ -252,9 +252,9 @@ function createTree(element, editor){
 	}
 
 	function deleteFile(p) {
-		if (!confirm("删除 " + p + "？")) return;
+		if (!confirm(t('deleteConfirm') + " " + p + "？")) return;
 		req.add("GET", getURL("/edit"), { func:"delete", path:p }, function(st, resp) {
-			if (st != 200) alert("错误 " + st + ": " + resp);
+			if (st != 200) alert(t('error') + " " + st + ": " + resp);
 			else refreshTree();
 		});
 	}
@@ -290,8 +290,8 @@ function createTree(element, editor){
 				return opt;
 			}
 
-			menu.appendChild(createOption("下载", "#fff", function(){ downloadFile(path); }));
-			menu.appendChild(createOption("删除", "#f66", function(){ deleteFile(path); }));
+			menu.appendChild(createOption(t('download'), "#fff", function(){ downloadFile(path); }));
+			menu.appendChild(createOption(t('delete'), "#f66", function(){ deleteFile(path); }));
 			d.body.appendChild(menu);
 
 			function cleanup() {
@@ -560,6 +560,8 @@ function createEditor(element,file){
 }
 
 function onBodyLoad(){
+	// 应用翻译
+	applyTranslations();
 	var vars={};
 	window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi,function(m,k,v){
 		vars[decodeURIComponent(k)]=decodeURIComponent(v);

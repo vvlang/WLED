@@ -10,15 +10,17 @@
 		var cnfr = false;
 		function cR() {
 			if (!cnfr) {
-				var bt = gId('rev');
-				bt.style.color = "red";
-				bt.innerText = "撤销！";
+			var bt = gId('rev');
+			bt.style.color = "red";
+			bt.innerText = t('revert');
 				cnfr = true;
 				return;
 			}
 			window.open(getURL("/update?revert"),"_self");
 		}
 		function GetV() {
+			// 应用翻译
+			applyTranslations();
 			// Fetch device info via JSON API instead of compiling it in
 			fetch('/json/info')
 				.then(response => response.json())
@@ -34,15 +36,15 @@
 					if (isESP32) {
 						gId('bootloader-section').style.display = 'block';
 					if (data.bootloaderSHA256) {
-						gId('bootloader-hash').innerText = '当前引导程序 SHA256: ' + data.bootloaderSHA256;
+						gId('bootloader-hash').innerText = t('currentBootloader') + ': ' + data.bootloaderSHA256;
 					}
 					}
 				})
 				.catch(error => {
-					console.log('无法获取设备信息:', error);
+					console.log(t('cannotGetDeviceInfo') + ':', error);
 					// Fallback to compiled-in value if API call fails
-					document.querySelector('.installed-version').textContent = '未知';
-					document.querySelector('.release-name').textContent = '未知';
+					document.querySelector('.installed-version').textContent = t('unknown');
+					document.querySelector('.release-name').textContent = t('unknown');
 				});
 		}
 	</script>
@@ -51,32 +53,32 @@
 	</style>
 </head>
 <body onload="GetV();">
-	<h2>WLED 软件更新</h2>
+	<h2 data-i18n="softwareUpdate">WLED 软件更新</h2>
 	<form method='POST' action='./update' id='upd' enctype='multipart/form-data' onsubmit="toggle('upd')">
-		已安装版本: <span class="sip installed-version">正在加载...</span><br>
-		发布版本: <span class="sip release-name">正在加载...</span><br>
-		下载最新固件: <a href="https://github.com/wled-dev/WLED/releases" target="_blank" 
+		<span data-i18n="installedVersion">已安装版本</span>: <span class="sip installed-version" data-i18n="loading">正在加载...</span><br>
+		<span data-i18n="releaseVersion">发布版本</span>: <span class="sip release-name" data-i18n="loading">正在加载...</span><br>
+		<span data-i18n="downloadLatest">下载最新固件</span>: <a href="https://github.com/wled-dev/WLED/releases" target="_blank" 
 		style="vertical-align: text-bottom; display: inline-flex;">
 		<img src="https://img.shields.io/github/release/wled-dev/WLED.svg?style=flat-square"></a><br>
 		<input type="hidden" name="skipValidation" value="" id="sV">
 		<input type='file' name='update' required><br> <!--should have accept='.bin', but it prevents file upload from android app-->
 		<input type='checkbox' onchange="sV.value=checked?1:''" id="skipValidation">
-		<label for='skipValidation'>忽略固件验证</label><br>
-		<button type="submit">更新！</button><br>
+		<label for='skipValidation' data-i18n="skipValidation">忽略固件验证</label><br>
+		<button type="submit" data-i18n="update">更新！</button><br>
 		<hr class="sml">
-		<button id="rev" type="button" onclick="cR()">撤销更新</button><br>
-		<button type="button" onclick="B()">返回</button>
+		<button id="rev" type="button" onclick="cR()" data-i18n="revertUpdate">撤销更新</button><br>
+		<button type="button" onclick="B()" data-i18n="back">返回</button>
 	</form>
 	<div id="bootloader-section" style="display:none;">
 		<hr class="sml">
-		<h2>ESP32 引导程序更新</h2>
+		<h2 data-i18n="bootloaderUpdate">ESP32 引导程序更新</h2>
 		<div id="bootloader-hash" class="sip" style="margin-bottom:8px;"></div>
 		<form method='POST' action='./updatebootloader' id='bootupd' enctype='multipart/form-data' onsubmit="toggle('bootupd')">
-			<b>警告:</b> 仅上传已验证的ESP32引导程序文件！<br>
+			<b data-i18n="warning">警告</b>: <span data-i18n="onlyUploadVerified">仅上传已验证的ESP32引导程序文件！</span><br>
 			<input type='file' name='update' required><br>
-			<button type="submit">更新引导程序</button>
+			<button type="submit" data-i18n="updateBootloader">更新引导程序</button>
 		</form>
 	</div>
-	<div id="Noupd" class="hide"><b>正在更新...</b><br>请不要关闭或刷新页面 :)</div>
+	<div id="Noupd" class="hide"><b data-i18n="updating">正在更新...</b><br><span data-i18n="doNotClose">请不要关闭或刷新页面 :)</span></div>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
 	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
 	<meta charset="utf-8">
-	<title>同步设置</title>
+	<title data-i18n="syncInterface">同步设置</title>
 	<script src="common.js" type="text/javascript"></script>
 	<script>
 	function adj(){if (d.Sf.DI.value == 6454) {if (d.Sf.EU.value == 1) d.Sf.EU.value = 0;}
@@ -34,6 +34,18 @@
 	function SetVal(){switch(parseInt(d.Sf.EP.value)){case 5568: d.Sf.DI.value = 5568; break; case 6454: d.Sf.DI.value = 6454; break; case 4048: d.Sf.DI.value = 4048; break; }; SP();FC();}
 	function S(){
 		getLoc();
+		// 初始化语言切换按钮
+		initLangToggle();
+		// 应用翻译
+		applyTranslations();
+		// 更新title标签
+		var titleEl = d.querySelector('title[data-i18n]');
+		if (titleEl) {
+			var key = titleEl.getAttribute('data-i18n');
+			if (typeof t === 'function') {
+				titleEl.textContent = t(key);
+			}
+		}
 		loadJS(getURL('/settings/s.js?p=4'), false, undefined, ()=>{SetVal();});	// If we set async false, file is loaded and executed, then next statement is processed
 		if (loc) d.Sf.action = getURL('/settings/sync');
 	}
@@ -49,19 +61,21 @@
 <form id="form_s" name="Sf" method="post" onsubmit="GC()">
 <div class="toprow">
 <div class="helpB"><button type="button" onclick="H('interfaces/udp-notifier/')">?</button></div>
-<button type="button" onclick="B()">返回</button><button type="submit">保存</button><hr>
-</div>
-<h2>同步设置</h2>
-<h3>WLED 广播</h3>
-UDP端口: <input name="UP" type="number" min="1" max="65535" class="d5" required><br>
-第二端口: <input name="U2" type="number" min="1" max="65535" class="d5" required><br>
+		<button type="button" onclick="B()" data-i18n="back">返回</button><button type="submit" data-i18n="save">保存</button>
+		<button type="button" id="langToggle" onclick="toggleLanguage()" style="background: rgba(255,255,255,0.1); border: none; color: var(--c-t); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 8px;">EN</button>
+		<hr>
+	</div>
+	<h2 data-i18n="syncInterface">同步设置</h2>
+<h3 data-i18n="wledBroadcast">WLED 广播</h3>
+<span data-i18n="udpPort">UDP端口</span>: <input name="UP" type="number" min="1" max="65535" class="d5" required><br>
+<span data-i18n="secondPort">第二端口</span>: <input name="U2" type="number" min="1" max="65535" class="d5" required><br>
 <div id="NoESPNOW" class="hide">
-<i class="warn">ESP-NOW支持已禁用。<br></i>
+<i class="warn" data-i18n="espnowDisabled">ESP-NOW支持已禁用。<br></i>
 </div>
 <div id="ESPNOW">
-使用ESP-NOW同步: <input type="checkbox" name="EN"><br><i>(在AP模式或无WiFi时)</i><br>
+<span data-i18n="useESPNOW">使用ESP-NOW同步</span>: <input type="checkbox" name="EN"><br><i data-i18n="inAPMode">(在AP模式或无WiFi时)</i><br>
 </div>
-<h3>同步组</h3>
+<h3 data-i18n="syncGroup">同步组</h3>
 <input name="GS" id="GS" type="number" style="display: none;"><!-- hidden inputs for bitwise group checkboxes -->
 <input name="GR" id="GR" type="number" style="display: none;">
 <table style="margin: 0 auto;">
@@ -77,7 +91,7 @@ UDP端口: <input name="UP" type="number" min="1" max="65535" class="d5" require
 		<td>8</td>
 	</tr>
 	<tr>
-		<td>发送:</td>
+		<td data-i18n="send">发送:</td>
 		<td><input type="checkbox" id="G1" name="G1"></td>
 		<td><input type="checkbox" id="G2" name="G2"></td>
 		<td><input type="checkbox" id="G3" name="G3"></td>
@@ -88,7 +102,7 @@ UDP端口: <input name="UP" type="number" min="1" max="65535" class="d5" require
 		<td><input type="checkbox" id="G8" name="G8"></td>
 	</tr>
 	<tr>
-		<td>接收:</td>
+		<td data-i18n="receive">接收:</td>
 		<td><input type="checkbox" id="R1" name="R1"></td>
 		<td><input type="checkbox" id="R2" name="R2"></td>
 		<td><input type="checkbox" id="R3" name="R3"></td>
@@ -99,132 +113,130 @@ UDP端口: <input name="UP" type="number" min="1" max="65535" class="d5" require
 		<td><input type="checkbox" id="R8" name="R8"></td>
 	</tr>
 </table>
-<h3>接收</h3>
-<nowrap><input type="checkbox" name="RB">亮度,</nowrap> <nowrap><input type="checkbox" name="RC">颜色,</nowrap> <nowrap><input type="checkbox" name="RX">效果,</nowrap> <nowrap>和 <input type="checkbox" name="RP">调色板</nowrap><br>
-<input type="checkbox" name="SO"> 段选项, <input type="checkbox" name="SG"> 边界
-<h3>发送</h3>
-启动时启用同步: <input type="checkbox" name="SS"><br>
-直接更改时发送通知: <input type="checkbox" name="SD"><br>
-按钮按下或红外时发送通知: <input type="checkbox" name="SB"><br>
-发送Alexa通知: <input type="checkbox" name="SA"><br>
-发送Philips Hue更改通知: <input type="checkbox" name="SH"><br>
-UDP数据包重传: <input name="UR" type="number" min="0" max="30" class="d5" required><br><br>
-<i>需要重启以应用更改。 </i>
+<h3 data-i18n="receive">接收</h3>
+<nowrap><input type="checkbox" name="RB"><span data-i18n="brightness">亮度</span>,</nowrap> <nowrap><input type="checkbox" name="RC"><span data-i18n="color">颜色</span>,</nowrap> <nowrap><input type="checkbox" name="RX"><span data-i18n="effect">效果</span>,</nowrap> <nowrap><span data-i18n="and">和</span> <input type="checkbox" name="RP"><span data-i18n="palette">调色板</span></nowrap><br>
+<input type="checkbox" name="SO"> <span data-i18n="segmentOptions">段选项</span>, <input type="checkbox" name="SG"> <span data-i18n="boundary">边界</span>
+<h3 data-i18n="send">发送</h3>
+<span data-i18n="enableSyncOnStart">启动时启用同步</span>: <input type="checkbox" name="SS"><br>
+<span data-i18n="sendNotificationOnDirectChange">直接更改时发送通知</span>: <input type="checkbox" name="SD"><br>
+<span data-i18n="sendNotificationOnButton">按钮按下或红外时发送通知</span>: <input type="checkbox" name="SB"><br>
+<span data-i18n="sendAlexaNotification">发送Alexa通知</span>: <input type="checkbox" name="SA"><br>
+<span data-i18n="sendHueNotification">发送Philips Hue更改通知</span>: <input type="checkbox" name="SH"><br>
+<span data-i18n="udpPacketRetransmission">UDP数据包重传</span>: <input name="UR" type="number" min="0" max="30" class="d5" required><br><br>
+<i data-i18n="requireRestart">需要重启以应用更改。</i>
 <hr class="sml">
-<h3>实例列表</h3>
-启用实例列表: <input type="checkbox" name="NL"><br>
-使此实例可被发现: <input type="checkbox" name="NB">
+<h3 data-i18n="instanceList">实例列表</h3>
+<span data-i18n="enableInstanceList">启用实例列表</span>: <input type="checkbox" name="NL"><br>
+<span data-i18n="makeInstanceDiscoverable">使此实例可被发现</span>: <input type="checkbox" name="NB">
 <hr class="sml">
-<h3>实时</h3>
-接收UDP实时数据: <input type="checkbox" name="RD"><br>
-仅使用主段: <input type="checkbox" name="MO"><br>
-遵循LED映射: <input type="checkbox" name="RLM"><br><br>
-<i>网络DMX输入</i><br>
-类型:
+<h3 data-i18n="realtime">实时</h3>
+<span data-i18n="receiveUDPRealtime">接收UDP实时数据</span>: <input type="checkbox" name="RD"><br>
+<span data-i18n="useMainSegmentOnly">仅使用主段</span>: <input type="checkbox" name="MO"><br>
+<span data-i18n="followLEDMapping">遵循LED映射</span>: <input type="checkbox" name="RLM"><br><br>
+<i data-i18n="networkDMXInput">网络DMX输入</i><br>
+<span data-i18n="type">类型</span>:
 <select name=DI onchange="SP(); adj();">
 <option value=5568>E1.31 (sACN)</option>
 <option value=6454>Art-Net</option>
-<option value=0 selected>自定义端口</option>
+<option value=0 selected data-i18n="customPort">自定义端口</option>
 </select><br>
-<div id=xp>端口: <input name="EP" type="number" min="1" max="65535" value="5568" class="d5" required><br></div>
-组播: <input type="checkbox" name="EM"><br>
-起始宇宙: <input name="EU" type="number" min="0" max="63999" required><br>
-<i>需要重启。</i> 查看 <a href="https://github.com/LedFx/LedFx" target="_blank">LedFx</a>！<br>
-跳过乱序数据包: <input type="checkbox" name="ES"><br>
-DMX起始地址: <input name="DA" type="number" min="1" max="510" required><br>
-DMX段间距: <input name="XX" type="number" min="0" max="150" required><br>
-E1.31端口优先级: <input name="PY" type="number" min="0" max="200" required><br>
-DMX模式:
+<div id=xp><span data-i18n="port">端口</span>: <input name="EP" type="number" min="1" max="65535" value="5568" class="d5" required><br></div>
+<span data-i18n="multicast">组播</span>: <input type="checkbox" name="EM"><br>
+<span data-i18n="startUniverse">起始宇宙</span>: <input name="EU" type="number" min="0" max="63999" required><br>
+<i data-i18n="requireRestart">需要重启。</i> 查看 <a href="https://github.com/LedFx/LedFx" target="_blank">LedFx</a>！<br>
+<span data-i18n="skipOutOfOrderPackets">跳过乱序数据包</span>: <input type="checkbox" name="ES"><br>
+<span data-i18n="dmxStartAddress">DMX起始地址</span>: <input name="DA" type="number" min="1" max="510" required><br>
+<span data-i18n="dmxSegmentSpacing">DMX段间距</span>: <input name="XX" type="number" min="0" max="150" required><br>
+<span data-i18n="e131PortPriority">E1.31端口优先级</span>: <input name="PY" type="number" min="0" max="200" required><br>
+<span data-i18n="dmxMode">DMX模式</span>:
 <select name=DM>
-<option value=0>已禁用</option>
-<option value=1>单RGB</option>
-<option value=2>单DRGB</option>
-<option value=3>效果</option>
-<option value=7>效果 + 白色</option>
-<option value=8>效果段</option>
-<option value=9>效果段 + 白色</option>
-<option value=4>多RGB</option>
-<option value=5>调光器 + 多RGB</option>
-<option value=6>多RGBW</option>
-<option value=10>预设</option>
+<option value=0 data-i18n="disabled">已禁用</option>
+<option value=1 data-i18n="singleRGB">单RGB</option>
+<option value=2 data-i18n="singleDRGB">单DRGB</option>
+<option value=3 data-i18n="effectMode">效果</option>
+<option value=7 data-i18n="effectPlusWhite">效果 + 白色</option>
+<option value=8 data-i18n="effectSegment">效果段</option>
+<option value=9 data-i18n="effectSegmentPlusWhite">效果段 + 白色</option>
+<option value=4 data-i18n="multiRGB">多RGB</option>
+<option value=5 data-i18n="dimmerPlusMultiRGB">调光器 + 多RGB</option>
+<option value=6 data-i18n="multiRGBW">多RGBW</option>
+<option value=10 data-i18n="preset">预设</option>
 </select><br>
 <a href="https://kno.wled.ge/interfaces/e1.31-dmx/" target="_blank">E1.31 信息</a><br>
-超时: <input name="ET" type="number" min="1" max="65000" required> 毫秒<br>
-强制最大亮度: <input type="checkbox" name="FB"><br>
-禁用实时gamma校正: <input type="checkbox" name="RG"><br>
-实时LED偏移: <input name="WO" type="number" min="-255" max="255" required>
+<span data-i18n="timeout">超时</span>: <input name="ET" type="number" min="1" max="65000" required> <span data-i18n="milliseconds">毫秒</span><br>
+<span data-i18n="forceMaxBrightness">强制最大亮度</span>: <input type="checkbox" name="FB"><br>
+<span data-i18n="disableRealtimeGamma">禁用实时gamma校正</span>: <input type="checkbox" name="RG"><br>
+<span data-i18n="realtimeLEDOffset">实时LED偏移</span>: <input name="WO" type="number" min="-255" max="255" required>
 <div id="dmxInput">
-	<h4>有线DMX输入引脚</h4>
-	DMX RX: <input name="IDMR" type="number" min="-1" max="99">RO<br/>
-	DMX TX: <input name="IDMT" type="number" min="-1" max="99">DI<br/>
-	DMX使能: <input name="IDME" type="number" min="-1" max="99">RE+DE<br/>
-	DMX端口: <input name="IDMP" type="number" min="1" max="2"><br/>
+	<h4 data-i18n="wiredDMXInputPins">有线DMX输入引脚</h4>
+	<span data-i18n="dmxRX">DMX RX</span>: <input name="IDMR" type="number" min="-1" max="99">RO<br/>
+	<span data-i18n="dmxTX">DMX TX</span>: <input name="IDMT" type="number" min="-1" max="99">DI<br/>
+	<span data-i18n="dmxEnable">DMX使能</span>: <input name="IDME" type="number" min="-1" max="99">RE+DE<br/>
+	<span data-i18n="dmxPort">DMX端口</span>: <input name="IDMP" type="number" min="1" max="2"><br/>
 </div> 
 <div id="dmxInputOff">
-	<br><em style="color:darkorange">此固件版本不包含DMX输入支持。<br></em>
+	<br><em style="color:darkorange" data-i18n="firmwareNoDMXInput">此固件版本不包含DMX输入支持。<br></em>
 </div> 
 <div id="dmxOnOff2">
-  <br><em style="color:darkorange">此固件版本不包含DMX输出支持。<br></em>
+  <br><em style="color:darkorange" data-i18n="firmwareNoDMXOutput">此固件版本不包含DMX输出支持。<br></em>
 </div> 
 <hr class="sml">
-<h3>Alexa语音助手</h3>
+<h3 data-i18n="alexaVoiceAssistant">Alexa语音助手</h3>
 <div id="NoAlexa" class="hide">
-	<i class="warn">此固件版本不包含Alexa支持。<br></i><br>
+	<i class="warn" data-i18n="firmwareNoAlexa">此固件版本不包含Alexa支持。<br></i><br>
 </div>
 <div id="Alexa">
-模拟Alexa设备: <input type="checkbox" name="AL"><br>
-Alexa调用名称: <input type="text" name="AI" maxlength="32"><br>
-同时模拟设备以调用前 <input name="AP" type="number" class="s" min="0" max="9"> 个预设<br><br>
+<span data-i18n="simulateAlexaDevice">模拟Alexa设备</span>: <input type="checkbox" name="AL"><br>
+<span data-i18n="alexaInvocationName">Alexa调用名称</span>: <input type="text" name="AI" maxlength="32"><br>
+<span data-i18n="simulateDevicesForPresets">同时模拟设备以调用前</span> <input name="AP" type="number" class="s" min="0" max="9"> <span data-i18n="presets">个预设</span><br><br>
 </div>
 <hr class="sml">
-<div class="warn">&#9888; <b>MQTT和Hue同步都连接到外部主机！<br>
-这可能会影响WLED的响应速度。</b><br>
+<div class="warn" data-i18n="mqttHueWarning">&#9888; <b>MQTT和Hue同步都连接到外部主机！<br>这可能会影响WLED的响应速度。</b><br>
 </div>
-为获得最佳效果，请一次仅使用其中一项服务。<br>
-(或者，将第二个ESP连接到它们并使用UDP同步)
+<span data-i18n="bestResults">为获得最佳效果，请一次仅使用其中一项服务。</span><br>
+<span data-i18n="orConnectSecondESP">(或者，将第二个ESP连接到它们并使用UDP同步)</span>
 <hr class="sml">
-<h3>MQTT</h3>
+<h3 data-i18n="mqtt">MQTT</h3>
 <div id="NoMQTT" class="hide">
-	<i class="warn">此固件版本不包含MQTT支持。<br></i>
+	<i class="warn" data-i18n="firmwareNoMQTT">此固件版本不包含MQTT支持。<br></i>
 </div>
 <div id="MQTT">
-启用MQTT: <input type="checkbox" name="MQ"><br>
-代理: <input type="text" name="MS" maxlength="32">
-端口: <input name="MQPORT" type="number" min="1" max="65535" class="d5"><br>
-<b>MQTT凭据通过不安全连接发送。<br>
-永远不要将MQTT密码用于其他服务！</b><br>
-用户名: <input type="text" name="MQUSER" maxlength="40"><br>
-密码: <input type="password" name="MQPASS" maxlength="64"><br>
-客户端ID: <input type="text" name="MQCID" maxlength="40"><br>
-设备主题: <input type="text" name="MD" maxlength="32"><br>
-组主题: <input type="text" name="MG" maxlength="32"><br>
-按钮按下时发布: <input type="checkbox" name="BM"><br>
-保留亮度和颜色消息: <input type="checkbox" name="RT"><br>
-<i>需要重启以应用更改。 </i><a href="https://kno.wled.ge/interfaces/mqtt/" target="_blank">MQTT 信息</a>
+<span data-i18n="enableMQTT">启用MQTT</span>: <input type="checkbox" name="MQ"><br>
+<span data-i18n="broker">代理</span>: <input type="text" name="MS" maxlength="32">
+<span data-i18n="port">端口</span>: <input name="MQPORT" type="number" min="1" max="65535" class="d5"><br>
+<b data-i18n="mqttCredentialsWarning">MQTT凭据通过不安全连接发送。<br>永远不要将MQTT密码用于其他服务！</b><br>
+<span data-i18n="username">用户名</span>: <input type="text" name="MQUSER" maxlength="40"><br>
+<span data-i18n="password">密码</span>: <input type="password" name="MQPASS" maxlength="64"><br>
+<span data-i18n="clientID">客户端ID</span>: <input type="text" name="MQCID" maxlength="40"><br>
+<span data-i18n="deviceTopic">设备主题</span>: <input type="text" name="MD" maxlength="32"><br>
+<span data-i18n="groupTopic">组主题</span>: <input type="text" name="MG" maxlength="32"><br>
+<span data-i18n="publishOnButtonPress">按钮按下时发布</span>: <input type="checkbox" name="BM"><br>
+<span data-i18n="retainBrightnessColorMessages">保留亮度和颜色消息</span>: <input type="checkbox" name="RT"><br>
+<i data-i18n="requireRestart">需要重启以应用更改。</i> <a href="https://kno.wled.ge/interfaces/mqtt/" target="_blank" data-i18n="mqttInfo">MQTT 信息</a>
 </div>
-<h3>Philips Hue</h3>
+<h3 data-i18n="philipsHue">Philips Hue</h3>
 <div id="NoHue" class="hide">
-	<em class="warn">此固件版本不包含Philips Hue支持。<br></em>
+	<em class="warn" data-i18n="firmwareNoHue">此固件版本不包含Philips Hue支持。<br></em>
 </div>
 <div id="Hue">
-<i>您可以在hue应用的"关于"部分找到桥接器IP和灯光编号。</i><br>
-轮询Hue灯光 <input name="HL" type="number" min="1" max="99" > 每 <input name="HI" type="number" min="100" max="65000"> 毫秒: <input type="checkbox" name="HP"><br>
-然后，接收 <input type="checkbox" name="HO"> 开/关, <input type="checkbox" name="HB"> 亮度, 和 <input type="checkbox" name="HC"> 颜色<br>
-Hue桥接器IP:<br>
+<i data-i18n="findBridgeIP">您可以在hue应用的"关于"部分找到桥接器IP和灯光编号。</i><br>
+<span data-i18n="pollHueLights">轮询Hue灯光</span> <input name="HL" type="number" min="1" max="99" > <span data-i18n="every">每</span> <input name="HI" type="number" min="100" max="65000"> <span data-i18n="milliseconds">毫秒</span>: <input type="checkbox" name="HP"><br>
+然后，接收 <input type="checkbox" name="HO"> <span data-i18n="receiveOnOff">开/关</span>, <input type="checkbox" name="HB"> <span data-i18n="receiveBrightness">亮度</span>, <span data-i18n="and">和</span> <input type="checkbox" name="HC"> <span data-i18n="receiveColor">颜色</span><br>
+<span data-i18n="hueBridgeIP">Hue桥接器IP</span>:<br>
 <input name="H0" type="number" class="s" min="0" max="255" > .
 <input name="H1" type="number" class="s" min="0" max="255" > .
 <input name="H2" type="number" class="s" min="0" max="255" > .
 <input name="H3" type="number" class="s" min="0" max="255" ><br>
-<b>按下桥接器上的pushlink按钮，然后保存此页面！</b><br>
-(首次连接时)<br>
-Hue状态: <span class="sip"> 在此版本中已禁用 </span>
+<b data-i18n="pressPushlinkButton">按下桥接器上的pushlink按钮，然后保存此页面！</b><br>
+<span data-i18n="firstTimeConnection">(首次连接时)</span><br>
+<span data-i18n="hueStatus">Hue状态</span>: <span class="sip" data-i18n="disabledInThisVersion"> 在此版本中已禁用 </span>
 </div>
-<h3>串口</h3>
+<h3 data-i18n="serial">串口</h3>
 <div id="NoSerial" class="hide">
-	<em class="warn">此固件版本不支持串口接口。<br></em>
+	<em class="warn" data-i18n="firmwareNoSerial">此固件版本不支持串口接口。<br></em>
 </div>
 <div id="Serial">
-波特率:
+<span data-i18n="baudRate">波特率</span>:
 <select name=BD>
 <option value=1152>115200</option>
 <option value=2304>230400</option>
@@ -235,10 +247,10 @@ Hue状态: <span class="sip"> 在此版本中已禁用 </span>
 <option value=10000>1000000</option>
 <option value=15000>1500000</option>
 </select><br>
-<i>保持115200以使用Improv。某些板可能不支持高速率。</i>
+<i data-i18n="keepForImprov">保持115200以使用Improv。某些板可能不支持高速率。</i>
 </div>
 <hr>
-<button type="button" onclick="B()">返回</button><button type="submit">保存</button>
+<button type="button" onclick="B()" data-i18n="back">返回</button><button type="submit" data-i18n="save">保存</button>
 </form>
 </body>
 </html>

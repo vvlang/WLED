@@ -32,6 +32,292 @@ var cfg = {
 		  labels:true, pcmbot:false, pid:true, seglen:false, segpwr:false, segexp:false,
 		  css:true, hdays:false, fxdef:true, on:0, off:0, idsort: false}
 };
+
+// 国际化翻译系统
+var currentLang = localStorage.getItem('wledLang') || 'zh'; // 默认中文
+var i18n = {
+	en: {
+		// 通用
+		loading: "Loading WLED interface...",
+		noJS: "Sorry, WLED interface requires JavaScript!",
+		// 顶部按钮
+		power: "Power",
+		timer: "Timer",
+		sync: "Sync",
+		preview: "Preview",
+		info: "Info",
+		nodes: "Nodes",
+		settings: "Settings",
+		pcMode: "PC Mode",
+		brightness: "Brightness",
+		// 颜色
+		hue: "Hue",
+		saturation: "Saturation",
+		brightnessValue: "Brightness/Value",
+		colorTemp: "Color Temperature",
+		red: "Red Channel",
+		green: "Green Channel",
+		blue: "Blue Channel",
+		white: "White Channel",
+		whiteBalance: "White Balance",
+		random: "Random",
+		selectSlot: "Select Slot",
+		hexRGB: "Hexadecimal RGB",
+		// 工具
+		fileEditor: "File Editor",
+		pixelMagic: "Pixel Magic Tool",
+		addPalette: "Add Custom Palette",
+		removePalette: "Remove Last Custom Palette",
+		// 调色板
+		colorPalette: "Color Palette",
+		search: "Search",
+		loadingText: "Loading...",
+		// 效果
+		effectMode: "Effect Mode",
+		usePalette: "Use Palette",
+		singlePixel: "Single Pixel",
+		volume: "Volume",
+		frequency: "Frequency",
+		freeze: "Freeze",
+		effectSpeed: "Effect Speed",
+		toggleLabels: "Toggle Labels",
+		// 标签栏
+		tabLabelColor: "Color",
+		tabLabelEffect: "Effect",
+		tabLabelSegment: "Segment",
+		tabLabelPreset: "Preset",
+		// HA Progress
+		haProgress: "Home Assistant Progress",
+		haSettings: "Settings",
+		haEnabled: "Enabled",
+		haIP: "HA IP Address",
+		haPort: "HA Port",
+		haToken: "HA Token",
+		haTokenPlaceholder: "Long-lived access token (optional)",
+		haEntityId: "Entity ID",
+		haEntityIdPlaceholder: "sensor.example",
+		haUpdateInterval: "Update Interval (ms)",
+		haDirection: "Display Direction",
+		haDirection0: "Forward (Left to Right)",
+		haDirection1: "Reverse (Right to Left)",
+		haDirection2: "Center Spread",
+		haMinValue: "Min Value",
+		haMaxValue: "Max Value",
+		haUseAttributes: "Read from attributes",
+		haAttributeKey: "Attribute Key",
+		haUseMultiColor: "Multi-color Gradient Mode",
+		haUseUniformColor: "Uniform Color Mode",
+		haProgressColor: "Progress Color (HEX)",
+		haBgColor: "Background Color (HEX)",
+		haNumColorPoints: "Number of Color Points (1-5)",
+		haSaveSettings: "Save Settings",
+		haReloadSettings: "Reload",
+		haEntity: "Entity",
+		haStatus: "Status",
+		haError: "Error",
+		haRunning: "Running",
+		haDisabled: "Disabled",
+		haEntity: "Entity",
+		haStatus: "Status",
+		haRunning: "Running",
+		haError: "Error",
+		haCollapse: "Collapse"
+	},
+	zh: {
+		// 通用
+		loading: "正在加载WLED界面...",
+		noJS: "抱歉，WLED界面需要JavaScript！",
+		// 顶部按钮
+		power: "电源",
+		timer: "定时",
+		sync: "同步",
+		preview: "预览",
+		info: "信息",
+		nodes: "节点",
+		settings: "配置",
+		pcMode: "PC模式",
+		brightness: "亮度",
+		// 颜色
+		hue: "色相",
+		saturation: "饱和度",
+		brightnessValue: "明度/亮度",
+		colorTemp: "色温/温度",
+		red: "红色通道",
+		green: "绿色通道",
+		blue: "蓝色通道",
+		white: "白色通道",
+		whiteBalance: "白平衡",
+		random: "随机",
+		selectSlot: "选择槽位",
+		hexRGB: "十六进制RGB",
+		// 工具
+		fileEditor: "文件编辑器",
+		pixelMagic: "像素魔法工具",
+		addPalette: "添加自定义调色板",
+		removePalette: "删除最后一个自定义调色板",
+		// 调色板
+		colorPalette: "颜色调色板",
+		search: "搜索",
+		loadingText: "正在加载...",
+		// 效果
+		effectMode: "效果模式",
+		usePalette: "使用调色板",
+		singlePixel: "单像素",
+		volume: "音量",
+		frequency: "频率",
+		freeze: "冻结",
+		effectSpeed: "效果速度",
+		toggleLabels: "切换标签",
+		// 标签栏
+		tabLabelColor: "颜色",
+		tabLabelEffect: "效果",
+		tabLabelSegment: "段",
+		tabLabelPreset: "预设",
+		// HA Progress
+		haProgress: "Home Assistant 进度条",
+		haSettings: "设置",
+		haEnabled: "启用",
+		haIP: "HA IP地址",
+		haPort: "HA 端口",
+		haToken: "HA Token",
+		haTokenPlaceholder: "长期访问令牌（可选）",
+		haEntityId: "实体ID",
+		haEntityIdPlaceholder: "sensor.example",
+		haUpdateInterval: "更新间隔(ms)",
+		haDirection: "显示方向",
+		haDirection0: "正向（左到右）",
+		haDirection1: "反向（右到左）",
+		haDirection2: "中心扩散",
+		haMinValue: "最小值",
+		haMaxValue: "最大值",
+		haUseAttributes: "从 attributes 读取",
+		haAttributeKey: "Attribute 键名",
+		haUseMultiColor: "多色渐变模式",
+		haUseUniformColor: "整体变色模式",
+		haProgressColor: "进度条颜色(HEX)",
+		haBgColor: "背景颜色(HEX)",
+		haNumColorPoints: "颜色点数量 (1-5)",
+		haSaveSettings: "保存设置",
+		haReloadSettings: "重新加载",
+		haEntity: "实体",
+		haStatus: "状态",
+		haRunning: "运行中",
+		haError: "错误",
+		haCollapse: "收起"
+	}
+};
+
+// 翻译函数
+function t(key, defaultValue = '') {
+	return i18n[currentLang] && i18n[currentLang][key] ? i18n[currentLang][key] : (i18n['en'][key] || defaultValue || key);
+}
+
+// 应用翻译到页面
+function applyTranslations() {
+	// 更新所有带有 data-i18n 属性的元素
+	d.querySelectorAll('[data-i18n]').forEach(el => {
+		const key = el.getAttribute('data-i18n');
+		if (el.tagName === 'INPUT' && el.type === 'text' && el.hasAttribute('placeholder')) {
+			el.placeholder = t(key);
+		} else if (el.hasAttribute('title')) {
+			el.title = t(key);
+		} else {
+			el.textContent = t(key);
+		}
+	});
+	
+	// 更新所有带有 data-i18n-title 属性的元素
+	d.querySelectorAll('[data-i18n-title]').forEach(el => {
+		const key = el.getAttribute('data-i18n-title');
+		el.title = t(key);
+	});
+	
+	// 更新所有select中的option（带有data-i18n属性）
+	d.querySelectorAll('select option[data-i18n]').forEach(opt => {
+		const key = opt.getAttribute('data-i18n');
+		opt.textContent = t(key);
+	});
+	
+	// 更新所有input的placeholder（带有data-i18n属性）
+	d.querySelectorAll('input[data-i18n]').forEach(input => {
+		const key = input.getAttribute('data-i18n');
+		if (input.type === 'text' || input.type === 'number') {
+			input.placeholder = t(key);
+		}
+	});
+	
+	// 更新HTML lang属性
+	d.documentElement.lang = currentLang === 'zh' ? 'zh-CN' : 'en';
+	
+	// 更新特定元素的文本（通过ID或类名）
+	if (gId('cv')) gId('cv').textContent = t('loading');
+	if (gId('buttonPower')) {
+		const label = gId('buttonPower').querySelector('.tab-label');
+		if (label) label.textContent = t('power');
+	}
+	if (gId('buttonNl')) {
+		const label = gId('buttonNl').querySelector('.tab-label');
+		if (label) label.textContent = t('timer');
+	}
+	if (gId('buttonSync')) {
+		const label = gId('buttonSync').querySelector('.tab-label');
+		if (label) label.textContent = t('sync');
+	}
+	if (gId('buttonSr')) {
+		const label = gId('buttonSr').querySelector('.tab-label');
+		if (label) label.textContent = t('preview');
+	}
+	if (gId('buttonI')) {
+		const label = gId('buttonI').querySelector('.tab-label');
+		if (label) label.textContent = t('info');
+	}
+	if (gId('buttonNodes')) {
+		const label = gId('buttonNodes').querySelector('.tab-label');
+		if (label) label.textContent = t('nodes');
+	}
+	const settingsBtn = d.querySelector('button[onclick*="/settings"]');
+	if (settingsBtn) {
+		const label = settingsBtn.querySelector('.tab-label');
+		if (label) label.textContent = t('settings');
+	}
+	if (gId('buttonPcm')) {
+		const label = gId('buttonPcm').querySelector('.tab-label');
+		if (label) label.textContent = t('pcMode');
+	}
+	if (gId('briwrap')) {
+		const hd = gId('briwrap').querySelector('.hd');
+		if (hd) hd.textContent = t('brightness');
+	}
+	
+	// 更新语言切换按钮文本
+	if (gId('langToggle')) {
+		gId('langToggle').textContent = currentLang === 'zh' ? 'EN' : '中文';
+	}
+}
+
+// 切换语言
+function toggleLanguage() {
+	currentLang = currentLang === 'zh' ? 'en' : 'zh';
+	localStorage.setItem('wledLang', currentLang);
+	applyTranslations();
+	// 重新应用HA Progress翻译（如果已加载）
+	if (typeof updateHAProgress === 'function') {
+		// 触发一次状态更新以刷新HA Progress显示
+		setTimeout(() => {
+			if (typeof requestJson === 'function') requestJson();
+		}, 100);
+	}
+	// 如果HA设置面板已打开，重新加载设置以更新翻译
+	if (typeof haSettingsVisible !== 'undefined' && haSettingsVisible && typeof loadHASettings === 'function') {
+		// 检查设置面板是否真的可见
+		var settingsPanel = gId('haProgressSettings');
+		if (settingsPanel && settingsPanel.style.display !== 'none') {
+			setTimeout(() => {
+				loadHASettings(true);
+			}, 150);
+		}
+	}
+}
 // [year, month (0 -> January, 11 -> December), day, duration in days, image url]
 var hol = [
 	[0, 11, 24, 4, "https://aircoookie.github.io/xmas.png"],		// christmas
@@ -247,6 +533,9 @@ function onLoad()
 	tooltip();
 	resetPUtil();
 	initFilters();
+	
+	// 应用翻译
+	applyTranslations();
 
 	if (localStorage.getItem('pcm') == "true" || (!/Mobi/.test(navigator.userAgent) && localStorage.getItem('pcm') == null)) togglePcMode(true);
 	applyCfg();
@@ -1271,6 +1560,354 @@ function updatePA()
 	}
 }
 
+function updateHAProgress(haProgress)
+{
+	var container = gId('haProgress');
+	if (!container) {
+		console.log('HA_Progress container not found');
+		return;
+	}
+	
+	// 如果haProgress不存在或未启用，隐藏容器
+	if (!haProgress) {
+		console.log('HA_Progress data not found in state');
+		container.style.display = 'none';
+		return;
+	}
+	
+	// 显示容器（即使未启用，也显示以便用户可以看到并启用）
+	container.style.display = 'block';
+	
+	// 如果未启用，显示提示信息
+	if (!haProgress.enabled) {
+		var entityEl = gId('haProgressEntity');
+		if (entityEl) {
+			entityEl.innerHTML = '<span data-i18n="haDisabled">已禁用</span>';
+		}
+		var statusEl = gId('haProgressStatus');
+		if (statusEl) {
+			statusEl.innerHTML = '<span data-i18n="haStatus">状态</span>: <span data-i18n="haDisabled">已禁用</span>';
+		}
+		var progressBar = gId('haProgressBar');
+		var progressText = gId('haProgressText');
+		if (progressBar) progressBar.style.width = '0%';
+		if (progressText) progressText.textContent = '0%';
+		var errorEl = gId('haProgressError');
+		if (errorEl) errorEl.style.display = 'none';
+		// 应用翻译
+		if (typeof applyTranslations === 'function') applyTranslations();
+		return;
+	}
+	
+	var progress = haProgress.progress || 0;
+	var entity = haProgress.entity || '-';
+	var error = haProgress.error || '';
+	var useMultiColor = haProgress['use-multi-color'] || false;
+	var useUniformColor = haProgress['use-uniform-color'] || false;
+	
+	// 更新实体信息
+	var entityLabel = typeof t === 'function' ? t('haEntity') : '实体';
+	var entityEl = gId('haProgressEntity');
+	if (entityEl) {
+		entityEl.textContent = entityLabel + ': ' + entity;
+	}
+	
+	// 更新状态文本
+	var statusLabel = typeof t === 'function' ? t('haStatus') : '状态';
+	var statusValue = error ? (typeof t === 'function' ? t('haError') : '错误') : (typeof t === 'function' ? t('haRunning') : '运行中');
+	if (error) {
+		var errorEl = gId('haProgressError');
+		if (errorEl) {
+			errorEl.textContent = error;
+			errorEl.style.display = 'block';
+		}
+	} else {
+		var errorEl = gId('haProgressError');
+		if (errorEl) errorEl.style.display = 'none';
+	}
+	var statusEl = gId('haProgressStatus');
+	if (statusEl) {
+		statusEl.textContent = statusLabel + ': ' + statusValue;
+	}
+	
+	// 更新进度条
+	var progressBar = gId('haProgressBar');
+	var progressText = gId('haProgressText');
+	
+	if (!progressBar || !progressText) {
+		console.error('HA_Progress bar elements not found');
+		return;
+	}
+	
+	progress = Math.max(0, Math.min(100, progress));
+	progressBar.style.width = progress + '%';
+	progressText.textContent = progress + '%';
+	
+	// 根据模式设置进度条颜色
+	if (useUniformColor) {
+		// 整体变色模式：根据进度百分比计算颜色
+		var hue = (progress / 100) * 120; // 0-120 (红到绿)
+		progressBar.style.background = `hsl(${hue}, 100%, 50%)`;
+	} else if (useMultiColor) {
+		// 多色渐变模式：使用渐变
+		progressBar.style.background = 'linear-gradient(90deg, #ff0000 0%, #ffff00 25%, #00ff00 50%, #00ffff 75%, #0000ff 100%)';
+	} else {
+		// 单色模式：使用默认绿色
+		progressBar.style.background = '#00ff00';
+	}
+}
+
+var haSettingsVisible = false;
+var haConfig = null;
+
+function toggleHASettings() {
+	haSettingsVisible = !haSettingsVisible;
+	var settingsPanel = gId('haProgressSettings');
+	var icon = gId('haSettingsIcon');
+	var text = gId('haSettingsText');
+	
+	if (haSettingsVisible) {
+		settingsPanel.style.display = 'block';
+		icon.textContent = '\ue18a'; // close icon
+		text.textContent = t('haCollapse');
+		if (!haConfig) {
+			loadHASettings();
+		}
+	} else {
+		settingsPanel.style.display = 'none';
+		icon.textContent = '\ue0a2'; // settings icon
+		text.textContent = t('haSettings');
+	}
+}
+
+function loadHASettings(showStatus = true) {
+	var statusDiv = gId('haSettingsStatus');
+	if (!statusDiv) {
+		console.error('haSettingsStatus element not found');
+		return;
+	}
+	
+	if (showStatus) {
+		statusDiv.style.display = 'block';
+		statusDiv.style.color = 'var(--c-t)';
+		statusDiv.textContent = typeof t === 'function' ? t('loadingConfig') : '正在加载配置...';
+	}
+	
+	fetch(getURL('/json/cfg'))
+		.then(res => {
+			if (!res.ok) {
+				throw new Error('HTTP ' + res.status);
+			}
+			return res.json();
+		})
+		.then(json => {
+			haConfig = json.um && json.um.HA_Progress ? json.um.HA_Progress : {};
+			
+			// 填充表单
+			if (gId('haEnabled')) {
+				gId('haEnabled').checked = haConfig.enabled || false;
+				gId('haIP').value = haConfig['ha-ip'] || '192.168.1.100';
+				gId('haPort').value = haConfig['ha-port'] || 8123;
+				gId('haToken').value = haConfig['ha-token'] || '';
+				gId('haEntityId').value = haConfig['entity-id'] || 'sensor.example';
+				gId('haUpdateInterval').value = haConfig['update-interval'] || 5000;
+				gId('haDirection').value = haConfig.direction || 0;
+				gId('haMinValue').value = haConfig['min-value'] || 0;
+				gId('haMaxValue').value = haConfig['max-value'] || 100;
+				gId('haUseAttributes').checked = haConfig['use-attributes'] || false;
+				gId('haAttributeKey').value = haConfig['attribute-key'] || 'value';
+				gId('haUseMultiColor').checked = haConfig['use-multi-color'] || false;
+				gId('haUseUniformColor').checked = haConfig['use-uniform-color'] || false;
+				
+				// 转换颜色为 HEX
+				var progressColor = haConfig['progress-color'] || 0x00FF00;
+				var bgColor = haConfig['bg-color'] || 0x000000;
+				gId('haProgressColor').value = progressColor.toString(16).toUpperCase().padStart(6, '0');
+				gId('haBgColor').value = bgColor.toString(16).toUpperCase().padStart(6, '0');
+				
+				// 加载颜色点和阈值
+				var numColorPoints = haConfig['num-color-points'] || 5;
+				gId('haNumColorPoints').value = numColorPoints;
+				
+				var colorPoints = haConfig['color-points'] || [0xFF0000, 0xFFFF00, 0x00FF00, 0x00FFFF, 0x0000FF];
+				var colorThresholds = haConfig['color-thresholds'] || [0, 25, 50, 75, 100];
+				
+				// 确保数组长度匹配
+				while (colorPoints.length < 5) colorPoints.push(0x000000);
+				while (colorThresholds.length < 5) colorThresholds.push(0);
+				
+				// 安全调用函数
+				if (typeof updateColorPointsUI === 'function') {
+					updateColorPointsUI();
+				}
+				
+				// 填充颜色点和阈值
+				for (var i = 0; i < 5; i++) {
+					var colorInput = gId('haColorPoint' + i);
+					var thresholdInput = gId('haColorThreshold' + i);
+					if (colorInput) {
+						colorInput.value = colorPoints[i].toString(16).toUpperCase().padStart(6, '0');
+					}
+					if (thresholdInput) {
+						thresholdInput.value = colorThresholds[i] || 0;
+					}
+				}
+				
+				// 安全调用函数
+				if (typeof toggleColorPoints === 'function') {
+					toggleColorPoints();
+				}
+			}
+			
+			if (showStatus && statusDiv) {
+				statusDiv.style.color = 'var(--c-g)';
+				statusDiv.textContent = typeof t === 'function' ? t('configLoaded') : '配置已加载';
+				setTimeout(() => { 
+					if (statusDiv) statusDiv.style.display = 'none'; 
+				}, 2000);
+			}
+		})
+		.catch(error => {
+			console.error('loadHASettings error:', error);
+			if (showStatus && statusDiv) {
+				statusDiv.style.color = 'var(--c-r)';
+				statusDiv.textContent = (typeof t === 'function' ? t('loadFailed') : '加载失败') + ': ' + error;
+			}
+		});
+}
+
+function saveHASettings() {
+	var statusDiv = gId('haSettingsStatus');
+	statusDiv.style.display = 'block';
+	statusDiv.style.color = 'var(--c-t)';
+	statusDiv.textContent = typeof t === 'function' ? t('saving') : '正在保存...';
+	
+	// 构建表单数据
+	var formData = new URLSearchParams();
+	formData.append('HA_Progress:enabled', gId('haEnabled').checked ? 'true' : 'false');
+	formData.append('HA_Progress:ha-ip', gId('haIP').value);
+	formData.append('HA_Progress:ha-port', gId('haPort').value);
+	formData.append('HA_Progress:ha-token', gId('haToken').value);
+	formData.append('HA_Progress:entity-id', gId('haEntityId').value);
+	formData.append('HA_Progress:update-interval', gId('haUpdateInterval').value);
+	formData.append('HA_Progress:direction', gId('haDirection').value);
+	formData.append('HA_Progress:min-value', gId('haMinValue').value);
+	formData.append('HA_Progress:max-value', gId('haMaxValue').value);
+	formData.append('HA_Progress:use-attributes', gId('haUseAttributes').checked ? 'true' : 'false');
+	formData.append('HA_Progress:attribute-key', gId('haAttributeKey').value);
+	formData.append('HA_Progress:use-multi-color', gId('haUseMultiColor').checked ? 'true' : 'false');
+	formData.append('HA_Progress:use-uniform-color', gId('haUseUniformColor').checked ? 'true' : 'false');
+	
+	// 转换 HEX 颜色为数字
+	var progressColor = parseInt(gId('haProgressColor').value, 16) || 0x00FF00;
+	var bgColor = parseInt(gId('haBgColor').value, 16) || 0x000000;
+	formData.append('HA_Progress:progress-color', progressColor);
+	formData.append('HA_Progress:bg-color', bgColor);
+	
+	// 保存颜色点数量
+	var numColorPoints = parseInt(gId('haNumColorPoints').value) || 5;
+	numColorPoints = Math.max(1, Math.min(5, numColorPoints));
+	formData.append('HA_Progress:num-color-points', numColorPoints);
+	
+	// 保存颜色点和阈值数组（按顺序添加）
+	for (var i = 0; i < numColorPoints; i++) {
+		var colorInput = gId('haColorPoint' + i);
+		var thresholdInput = gId('haColorThreshold' + i);
+		if (colorInput && thresholdInput) {
+			var colorValue = parseInt(colorInput.value, 16) || 0x000000;
+			var thresholdValue = parseInt(thresholdInput.value) || 0;
+			// 使用 [] 后缀表示数组
+			formData.append('HA_Progress:color-points[]', colorValue.toString());
+			formData.append('HA_Progress:color-thresholds[]', thresholdValue.toString());
+		}
+	}
+	
+	fetch(getURL('/settings/um'), {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/x-www-form-urlencoded'
+		},
+		body: formData.toString()
+	})
+		.then(res => {
+			if (res.ok) {
+				statusDiv.style.color = 'var(--c-g)';
+				statusDiv.textContent = typeof t === 'function' ? t('saveSuccess') : '保存成功！';
+				setTimeout(() => {
+					statusDiv.style.display = 'none';
+					requestJson(); // 刷新状态
+				}, 2000);
+			} else {
+				throw new Error(typeof t === 'function' ? t('saveFailed') : '保存失败');
+			}
+		})
+		.catch(error => {
+			statusDiv.style.color = 'var(--c-r)';
+			statusDiv.textContent = (typeof t === 'function' ? t('saveFailed') : '保存失败') + ': ' + error;
+		});
+}
+
+function toggleColorPoints() {
+	var useMultiColor = gId('haUseMultiColor').checked;
+	var useUniformColor = gId('haUseUniformColor').checked;
+	var colorPointsSection = gId('haColorPointsSection');
+	
+	if (useMultiColor || useUniformColor) {
+		colorPointsSection.style.display = 'block';
+		updateColorPointsUI();
+	} else {
+		colorPointsSection.style.display = 'none';
+	}
+}
+
+function updateColorPointsUI() {
+	var numColorPoints = parseInt(gId('haNumColorPoints').value) || 5;
+	numColorPoints = Math.max(1, Math.min(5, numColorPoints));
+	gId('haNumColorPoints').value = numColorPoints;
+	
+	var listDiv = gId('haColorPointsList');
+	var html = '';
+	
+	var defaultColors = ['FF0000', 'FFFF00', '00FF00', '00FFFF', '0000FF'];
+	var defaultThresholds = [0, 25, 50, 75, 100];
+	
+	for (var i = 0; i < numColorPoints; i++) {
+		var colorId = 'haColorPoint' + i;
+		var thresholdId = 'haColorThreshold' + i;
+		var existingColor = gId(colorId) ? gId(colorId).value : defaultColors[i];
+		var existingThreshold = gId(thresholdId) ? gId(thresholdId).value : defaultThresholds[i];
+		
+		html += '<div style="display: flex; align-items: center; margin-bottom: 6px; padding: 4px; background: rgba(255,255,255,0.05); border-radius: 4px;">';
+		html += '<span style="width: 50px; font-size: 10px; flex-shrink: 0;">点' + (i + 1) + ':</span>';
+		html += '<input type="text" id="' + colorId + '" value="' + existingColor + '" style="width: 70px; padding: 2px 4px; font-size: 11px; margin-right: 6px;" placeholder="HEX" maxlength="6" pattern="[0-9A-Fa-f]{6}">';
+		html += '<input type="color" value="#' + existingColor + '" onchange="var inp=gId(\'' + colorId + '\'); if(inp) inp.value=this.value.substring(1).toUpperCase()" style="width: 28px; height: 22px; margin-right: 8px; cursor: pointer; flex-shrink: 0;">';
+		html += '<span style="width: 45px; font-size: 10px; flex-shrink: 0;">阈值:</span>';
+		html += '<input type="number" id="' + thresholdId + '" value="' + existingThreshold + '" style="width: 55px; padding: 2px 4px; font-size: 11px;" min="0" max="100" placeholder="0-100">';
+		html += '<span style="margin-left: 4px; font-size: 10px; flex-shrink: 0;">%</span>';
+		html += '</div>';
+	}
+	
+	listDiv.innerHTML = html;
+	
+	// 同步颜色选择器
+	for (var i = 0; i < numColorPoints; i++) {
+		var colorInput = gId('haColorPoint' + i);
+		if (colorInput) {
+			colorInput.addEventListener('input', function(idx) {
+				return function() {
+					var colorPicker = this.nextElementSibling;
+					if (colorPicker && colorPicker.type === 'color') {
+						var hexValue = this.value.toUpperCase();
+						if (/^[0-9A-F]{6}$/.test(hexValue)) {
+							colorPicker.value = '#' + hexValue;
+						}
+					}
+				};
+			}(i));
+		}
+	}
+}
+
 function updateUI()
 {
 	gId('buttonPower').className = (isOn) ? 'active':'';
@@ -1518,6 +2155,14 @@ function readState(s,command=false)
 	gId('checkO2').checked = !(!i.o2);
 	gId('checkO3').checked = !(!i.o3);
 
+	// 处理 HA_Progress 状态
+	// 处理 HA_Progress 状态
+	if (typeof updateHAProgress === 'function') {
+		updateHAProgress(s.HA_Progress);
+	} else {
+		console.warn('updateHAProgress function not found');
+	}
+
 	if (s.error && s.error != 0) {
 		var errstr = "";
 		switch (s.error) {
@@ -1675,19 +2320,27 @@ function setEffectParameters(idx)
 	var icon = '<i class="icons sel-icon" onclick="tglHex()">&#xe2b3;</i> ';
 	var text = 'Color palette';
 	// if not controlDefined or palette has a value
-	if (hasRGB && ((!controlDefined) || (paOnOff.length>0 && paOnOff[0]!="" && isNaN(paOnOff[0])))) {
+	var paletteEnabled = hasRGB && ((!controlDefined) || (paOnOff.length>0 && paOnOff[0]!="" && isNaN(paOnOff[0])));
+	if (hasRGB) {
+		// Always show palette wrapper if RGB is supported
 		palw.style.display = "inline-block";
-		if (paOnOff.length>0 && paOnOff[0].indexOf("=")>0) {
-			// embeded default values
-			var dPos = paOnOff[0].indexOf("=");
-			var v = Math.max(0,Math.min(255,parseInt(paOnOff[0].substr(dPos+1))));
-			paOnOff[0] = paOnOff[0].substring(0,dPos);
+		if (paletteEnabled) {
+			if (paOnOff.length>0 && paOnOff[0].indexOf("=")>0) {
+				// embeded default values
+				var dPos = paOnOff[0].indexOf("=");
+				var v = Math.max(0,Math.min(255,parseInt(paOnOff[0].substr(dPos+1))));
+				paOnOff[0] = paOnOff[0].substring(0,dPos);
+			}
+			if (paOnOff.length>0 && paOnOff[0] != "!") text = paOnOff[0];
+			gId("adPal").classList.remove("hide");
+			if (lastinfo.cpalcount>0) gId("rmPal").classList.remove("hide");
+		} else {
+			// Palette selection disabled for this effect, but still show the list
+			gId("adPal").classList.remove("hide");
+			if (lastinfo.cpalcount>0) gId("rmPal").classList.remove("hide");
 		}
-		if (paOnOff.length>0 && paOnOff[0] != "!") text = paOnOff[0];
-		gId("adPal").classList.remove("hide");
-		if (lastinfo.cpalcount>0) gId("rmPal").classList.remove("hide");
 	} else {
-		// disable palette list
+		// disable palette list when no RGB support
 		text += ' not used';
 		palw.style.display = "none";
 		gId("adPal").classList.add("hide");

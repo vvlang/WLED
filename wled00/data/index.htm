@@ -12,8 +12,8 @@
 </head>
 <body onload="onLoad()">
 
-<div id="cv" class="overlay">正在加载WLED界面...</div>
-<noscript><div class="overlay" style="opacity:1;">抱歉，WLED界面需要JavaScript！</div></noscript>
+<div id="cv" class="overlay" data-i18n="loading">正在加载WLED界面...</div>
+<noscript><div class="overlay" style="opacity:1;" data-i18n="noJS">抱歉，WLED界面需要JavaScript！</div></noscript>
 <div id="bg"></div>
 
 <div class="wrapper" id="top">
@@ -29,7 +29,10 @@
 			<button id="buttonPcm" onclick="togglePcMode(true)"><i class="icons">&#xe23d;</i><p class="tab-label">PC模式</p></button>
 		</div>
 		<div id="briwrap">
-			<p class="hd">亮度</p>
+			<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+				<p class="hd" data-i18n="brightness">亮度</p>
+				<button id="langToggle" onclick="toggleLanguage()" style="background: rgba(255,255,255,0.1); border: none; color: var(--c-t); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">EN</button>
+			</div>
 			<div class="slider">
 				<i class="icons slider-icon" onclick="tglTheme()" style="transform: translateY(2px);">&#xe2a6;</i>
 				<div class="sliderwrap il">
@@ -47,57 +50,57 @@
 	<div id="Colors" class="tabcontent">
 		<div id="picker" class="noslide"></div>
 		<div id="hwrap" class="slider">
-			<div title="色相" class="sliderwrap il">
+			<div title="" data-i18n-title="hue" class="sliderwrap il">
 				<input id="sliderH" class="noslide" oninput="fromH()" onchange="setColor(0)" max="359" min="0" type="range" value="0" step="any">
 				<div class="sliderdisplay" style="background: linear-gradient(90deg, #f00 2%, #ff0 19%, #0f0 35%, #0ff 52%, #00f 68%, #f0f 85%, #f00)"></div>
 			</div>
 		</div>
 		<div id="swrap" class="slider">
-			<div title="饱和度" class="sliderwrap il">
+			<div title="" data-i18n-title="saturation" class="sliderwrap il">
 				<input id="sliderS" class="noslide" oninput="fromS()" onchange="setColor(0)" max="100" min="0" type="range" value="100" step="any">
 				<div class="sliderdisplay" style="background: linear-gradient(90deg, #aaa 0%, #f00)"></div>
 			</div>
 		</div>
 		<div id="vwrap" class="slider">
-			<div title="明度/亮度" class="sliderwrap il">
+			<div title="" data-i18n-title="brightnessValue" class="sliderwrap il">
 				<input id="sliderV" class="noslide" oninput="fromV()" onchange="setColor(0)" max="100" min="0" type="range" value="100" step="any" />
 				<div class="sliderdisplay"></div>
 			</div>
 		</div>
 		<div id="kwrap" class="slider">
-			<div title="色温/温度" class="sliderwrap il">
+			<div title="" data-i18n-title="colorTemp" class="sliderwrap il">
 				<input id="sliderK" class="noslide" oninput="fromK()" onchange="setColor(0)" max="10091" min="1900" type="range" value="6550" />
 				<div class="sliderdisplay"></div>
 			</div>
 		</div>
 		<div id="rgbwrap">
 			<div id="rwrap" class="slider">
-				<div title="红色通道" class="sliderwrap il">
+				<div title="" data-i18n-title="red" class="sliderwrap il">
 					<input id="sliderR" class="noslide" oninput="fromRgb()" onchange="setColor(0)" max="255" min="0" type="range" value="128" />
 					<div class="sliderdisplay"></div>
 				</div>
 			</div>
 			<div id="gwrap" class="slider">
-				<div title="绿色通道" class="sliderwrap il">
+				<div title="" data-i18n-title="green" class="sliderwrap il">
 					<input id="sliderG" class="noslide" oninput="fromRgb()" onchange="setColor(0)" max="255" min="0" type="range" value="128" />
 					<div class="sliderdisplay"></div>
 				</div>
 			</div>
 			<div id="bwrap" class="slider">
-				<div title="蓝色通道" class="sliderwrap il">
+				<div title="" data-i18n-title="blue" class="sliderwrap il">
 					<input id="sliderB" class="noslide" oninput="fromRgb()" onchange="setColor(0)" max="255" min="0" type="range" value="128" />
 					<div class="sliderdisplay"></div>
 				</div>
 			</div>
 		</div>
 		<div id="wwrap" class="slider">
-			<div id="whibri" title="白色通道" class="sliderwrap il">
+			<div id="whibri" title="" data-i18n-title="white" class="sliderwrap il">
 				<input id="sliderW" class="noslide" oninput="fromW()" onchange="setColor(0)" max="255" min="0" type="range" value="128" />
 				<div class="sliderdisplay"></div>
 			</div>
 		</div>
 		<div id="wbal" class="slider">
-			<div title="白平衡" class="sliderwrap il">
+			<div title="" data-i18n-title="whiteBalance" class="sliderwrap il">
 				<input id="sliderA" class="noslide" onchange="setBalance(this.value)" max="255" min="0" type="range" value="128" />
 				<div class="sliderdisplay"></div>
 			</div>
@@ -113,29 +116,116 @@
 			<div class="qcs" onclick="pC('#0000ff');" style="background-color:#0000ff;"></div>
 			<div class="qcs" onclick="pC('#00ffc8');" style="background-color:#00ffc8;"></div>
 			<div class="qcs" onclick="pC('#08ff00');" style="background-color:#08ff00;"></div>
-			<div class="qcs" onclick="pC('rnd');" title="随机" style="background:linear-gradient(to right, red, orange, yellow, green, blue, purple);transform: translateY(-11px);">R</div>
+			<div class="qcs" onclick="pC('rnd');" title="" data-i18n-title="random" style="background:linear-gradient(to right, red, orange, yellow, green, blue, purple);transform: translateY(-11px);">R</div>
 		</div>
 		<div id="csl">
-			<button id="csl0" title="选择槽位" class="btn" onclick="selectSlot(0);" data-r="0" data-g="0" data-b="0" data-w="0">1</button>
-			<button id="csl1" title="选择槽位" class="btn" onclick="selectSlot(1);" data-r="0" data-g="0" data-b="0" data-w="0">2</button>
-			<button id="csl2" title="选择槽位" class="btn" onclick="selectSlot(2);" data-r="0" data-g="0" data-b="0" data-w="0">3</button>
+			<button id="csl0" title="" data-i18n-title="selectSlot" class="btn" onclick="selectSlot(0);" data-r="0" data-g="0" data-b="0" data-w="0">1</button>
+			<button id="csl1" title="" data-i18n-title="selectSlot" class="btn" onclick="selectSlot(1);" data-r="0" data-g="0" data-b="0" data-w="0">2</button>
+			<button id="csl2" title="" data-i18n-title="selectSlot" class="btn" onclick="selectSlot(2);" data-r="0" data-g="0" data-b="0" data-w="0">3</button>
 		</div>
 		<p class="labels h" id="cslLabel"></p>
 		<div id="hexw">
 			<i class="icons sel-icon" onclick="tglRgb()">&#xe22d;</i>
-			<input id="hexc" title="十六进制RGB" type="text" class="noslide" onkeydown="hexEnter()" autocomplete="off" maxlength="8" />
+			<input id="hexc" title="" data-i18n-title="hexRGB" type="text" class="noslide" onkeydown="hexEnter()" autocomplete="off" maxlength="8" />
 			<button id="hexcnf" class="btn btn-xs" onclick="fromHex();"><i class="icons btn-icon">&#xe390;</i></button>
 		</div>
 		<div style="padding: 8px 0;" id="btns">
-			<button class="btn btn-xs" title="文件编辑器" type="button" id="edit" onclick="window.location.href=getURL('/edit')"><i class="icons btn-icon">&#xe2c6;</i></button>
-			<button class="btn btn-xs" title="像素魔法工具" type="button" id="pxmb" onclick="window.location.href=getURL('/pxmagic.htm')"><i class="icons btn-icon">&#xe410;</i></button>
-			<button class="btn btn-xs" title="添加自定义调色板" type="button" id="adPal" onclick="window.location.href=getURL('/cpal.htm')"><i class="icons btn-icon">&#xe18a;</i></button>
-			<button class="btn btn-xs" title="删除最后一个自定义调色板" type="button" id="rmPal" onclick="palettesData=null;localStorage.removeItem('wledPalx');requestJson({rmcpal:true});setTimeout(loadPalettes,250,loadPalettesData);"><i class="icons btn-icon">&#xe037;</i></button>
+			<button class="btn btn-xs" title="" data-i18n-title="fileEditor" type="button" id="edit" onclick="window.location.href=getURL('/edit')"><i class="icons btn-icon">&#xe2c6;</i></button>
+			<button class="btn btn-xs" title="" data-i18n-title="pixelMagic" type="button" id="pxmb" onclick="window.location.href=getURL('/pxmagic.htm')"><i class="icons btn-icon">&#xe410;</i></button>
+			<button class="btn btn-xs" title="" data-i18n-title="addPalette" type="button" id="adPal" onclick="window.location.href=getURL('/cpal.htm')"><i class="icons btn-icon">&#xe18a;</i></button>
+			<button class="btn btn-xs" title="" data-i18n-title="removePalette" type="button" id="rmPal" onclick="palettesData=null;localStorage.removeItem('wledPalx');requestJson({rmcpal:true});setTimeout(loadPalettes,250,loadPalettesData);"><i class="icons btn-icon">&#xe037;</i></button>
 		</div>
-		<p class="labels hd" id="pall"><i class="icons sel-icon" onclick="tglHex()">&#xe2b3;</i> 颜色调色板</p>
+		<div id="haProgress" class="ha-progress-container" style="display:none; padding: 12px; margin: 8px 0; background: rgba(0,0,0,0.2); border-radius: 8px;">
+			<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+				<p class="labels hd" style="margin: 0;"><i class="icons">&#xe066;</i> <span data-i18n="haProgress">Home Assistant 进度条</span></p>
+				<button class="btn btn-xs" onclick="toggleHASettings()" style="padding: 4px 8px; font-size: 11px;">
+					<i class="icons" id="haSettingsIcon">&#xe0a2;</i> <span id="haSettingsText" data-i18n="haSettings">设置</span>
+				</button>
+			</div>
+			<div id="haProgressInfo" style="font-size: 12px; color: var(--c-t); margin-bottom: 8px;">
+				<span id="haProgressEntity"><span data-i18n="haEntity">实体</span>: -</span><br>
+				<span id="haProgressStatus"><span data-i18n="haStatus">状态</span>: -</span>
+			</div>
+			<div style="position: relative; width: 100%; height: 20px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden;">
+				<div id="haProgressBar" style="position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: linear-gradient(90deg, #ff0000 0%, #ffff00 25%, #00ff00 50%, #00ffff 75%, #0000ff 100%); transition: width 0.3s ease; border-radius: 10px;"></div>
+				<div id="haProgressText" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 11px; font-weight: bold; color: #fff; text-shadow: 0 0 3px rgba(0,0,0,0.8); z-index: 1;">0%</div>
+			</div>
+			<div id="haProgressError" style="font-size: 11px; color: var(--c-r); margin-top: 4px; display: none;"></div>
+			
+			<!-- 设置面板 -->
+			<div id="haProgressSettings" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1);">
+				<div style="font-size: 11px; margin-bottom: 8px;">
+					<label style="display: flex; align-items: center; margin-bottom: 6px;">
+						<input type="checkbox" id="haEnabled" style="margin-right: 6px;"> <span data-i18n="haEnabled">启用</span>
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haIP">HA IP地址</span>: <input type="text" id="haIP" style="width: 150px; padding: 2px 4px; font-size: 11px;" placeholder="192.168.1.100">
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haPort">HA 端口</span>: <input type="number" id="haPort" style="width: 80px; padding: 2px 4px; font-size: 11px;" placeholder="8123" min="1" max="65535">
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haToken">HA Token</span>: <input type="text" id="haToken" style="width: 200px; padding: 2px 4px; font-size: 11px;" data-i18n="haTokenPlaceholder" placeholder="">
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haEntityId">实体ID</span>: <input type="text" id="haEntityId" style="width: 200px; padding: 2px 4px; font-size: 11px;" data-i18n="haEntityIdPlaceholder" placeholder="">
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haUpdateInterval">更新间隔(ms)</span>: <input type="number" id="haUpdateInterval" style="width: 100px; padding: 2px 4px; font-size: 11px;" placeholder="5000" min="1000" step="1000">
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haDirection">显示方向</span>: 
+						<select id="haDirection" style="padding: 2px 4px; font-size: 11px;">
+							<option value="0" data-i18n="haDirection0">正向（左到右）</option>
+							<option value="1" data-i18n="haDirection1">反向（右到左）</option>
+							<option value="2" data-i18n="haDirection2">中心扩散</option>
+						</select>
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haMinValue">最小值</span>: <input type="number" id="haMinValue" style="width: 100px; padding: 2px 4px; font-size: 11px;" placeholder="0" step="0.1">
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haMaxValue">最大值</span>: <input type="number" id="haMaxValue" style="width: 100px; padding: 2px 4px; font-size: 11px;" placeholder="100" step="0.1">
+					</label>
+					<label style="display: flex; align-items: center; margin-bottom: 6px;">
+						<input type="checkbox" id="haUseAttributes" style="margin-right: 6px;"> <span data-i18n="haUseAttributes">从 attributes 读取</span>
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haAttributeKey">Attribute 键名</span>: <input type="text" id="haAttributeKey" style="width: 150px; padding: 2px 4px; font-size: 11px;" placeholder="value">
+					</label>
+					<label style="display: flex; align-items: center; margin-bottom: 6px;">
+						<input type="checkbox" id="haUseMultiColor" style="margin-right: 6px;" onchange="toggleColorPoints()"> <span data-i18n="haUseMultiColor">多色渐变模式</span>
+					</label>
+					<label style="display: flex; align-items: center; margin-bottom: 6px;">
+						<input type="checkbox" id="haUseUniformColor" style="margin-right: 6px;" onchange="toggleColorPoints()"> <span data-i18n="haUseUniformColor">整体变色模式</span>
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haProgressColor">进度条颜色(HEX)</span>: <input type="text" id="haProgressColor" style="width: 100px; padding: 2px 4px; font-size: 11px;" placeholder="00FF00" maxlength="6">
+					</label>
+					<label style="display: block; margin-bottom: 6px;">
+						<span data-i18n="haBgColor">背景颜色(HEX)</span>: <input type="text" id="haBgColor" style="width: 100px; padding: 2px 4px; font-size: 11px;" placeholder="000000" maxlength="6">
+					</label>
+					<div id="haColorPointsSection" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
+						<label style="display: block; margin-bottom: 6px;">
+							<span data-i18n="haNumColorPoints">颜色点数量 (1-5)</span>: 
+							<input type="number" id="haNumColorPoints" style="width: 60px; padding: 2px 4px; font-size: 11px;" min="1" max="5" value="5" onchange="updateColorPointsUI()">
+						</label>
+						<div id="haColorPointsList" style="margin-top: 8px;">
+							<!-- 颜色点列表将动态生成 -->
+						</div>
+					</div>
+				</div>
+				<div style="margin-top: 8px;">
+					<button class="btn btn-xs" onclick="saveHASettings()" style="padding: 4px 12px; margin-right: 8px;" data-i18n="haSaveSettings">保存设置</button>
+					<button class="btn btn-xs" onclick="loadHASettings()" style="padding: 4px 12px;" data-i18n="haReloadSettings">重新加载</button>
+				</div>
+				<div id="haSettingsStatus" style="font-size: 11px; margin-top: 8px; display: none;"></div>
+			</div>
+		</div>
+		<p class="labels hd" id="pall"><i class="icons sel-icon" onclick="tglHex()">&#xe2b3;</i> <span data-i18n="colorPalette">颜色调色板</span></p>
 		<div id="palw" class="il">
 			<div class="staytop fnd">
-				<input type="text" placeholder="搜索" oninput="search(this,'pallist')" onfocus="search(this,'pallist')" />
+				<input type="text" data-i18n="search" placeholder="" oninput="search(this,'pallist')" onfocus="search(this,'pallist')" />
 				<i class="icons clear-icon" onclick="clean(this)">&#xe38f;</i>
 				<i class="icons search-icon">&#xe0a1;</i>
 			</div>
@@ -143,7 +233,7 @@
 				<div class="lstI">
 					<label class="radio schkl" onclick="loadPalettes()">
 						<div class="lstIcontent">
-							<span class="lstIname">
+							<span class="lstIname" data-i18n="loadingText">
 								正在加载...
 							</span>
 						</div>
@@ -155,17 +245,17 @@
 
 	<div id="Effects" class="tabcontent">
 		<div id="fx">
-			<p class="labels hd" id="modeLabel">效果模式</p>
+			<p class="labels hd" id="modeLabel" data-i18n="effectMode">效果模式</p>
 			<div class="staytop fnd" id="fxFind" onmousedown="preventBlur(event);">
-				<input type="text" placeholder="搜索" oninput="search(this,'fxlist')" onfocus="filterFocus(event);search(this,'fxlist');" onblur="filterFocus(event);">
+				<input type="text" data-i18n="search" placeholder="" oninput="search(this,'fxlist')" onfocus="filterFocus(event);search(this,'fxlist');" onblur="filterFocus(event);">
 				<i class="icons clear-icon" onclick="clean(this);">&#xe38f;</i>
 				<i class="icons search-icon" style="cursor:pointer;">&#xe0a1;</i>
 				<div id="filters" class="filter fade">
-					<label id="filterPal" title="使用调色板" class="check fchkl">&#x1F3A8;
+					<label id="filterPal" title="" data-i18n-title="usePalette" class="check fchkl">&#x1F3A8;
 						<input type="checkbox" data-flt="&#x1F3A8;" onchange="filterFx();">
 						<span class="checkmark"></span>
 					</label>
-					<label id="filter0D" title="单像素" class="check fchkl">&#8226;
+					<label id="filter0D" title="" data-i18n-title="singlePixel" class="check fchkl">&#8226;
 						<input type="checkbox" data-flt="&#8226;" onchange="filterFx();">
 						<span class="checkmark"></span>
 					</label>
@@ -177,11 +267,11 @@
 						<input type="checkbox" data-flt="&#9638;" onchange="filterFx();">
 						<span class="checkmark"></span>
 					</label>
-					<label id="filterVol" title="音量" class="check fchkl">&#9834;
+					<label id="filterVol" title="" data-i18n-title="volume" class="check fchkl">&#9834;
 						<input type="checkbox" data-flt="&#9834;" onchange="filterFx();">
 						<span class="checkmark"></span>
 					</label>
-					<label id="filterFreq" title="频率" class="check fchkl">&#9835;
+					<label id="filterFreq" title="" data-i18n-title="frequency" class="check fchkl">&#9835;
 						<input type="checkbox" data-flt="&#9835;" onchange="filterFx();">
 						<span class="checkmark"></span>
 					</label>
@@ -191,7 +281,7 @@
 				<div class="lstI">
 					<label class="radio schkl" onclick="loadFX()">
 						<div class="lstIcontent">
-							<span class="lstIname">
+							<span class="lstIname" data-i18n="loadingText">
 								正在加载...
 							</span>
 						</div>
@@ -201,8 +291,8 @@
 		</div>
 		<div id="sliders">
 			<div id="slider0" class="slider">
-				<i class="icons slider-icon" title="冻结" onclick="tglFreeze()">&#xe325;</i>
-				<div title="效果速度" class="sliderwrap il">
+				<i class="icons slider-icon" title="" data-i18n-title="freeze" onclick="tglFreeze()">&#xe325;</i>
+				<div title="" data-i18n-title="effectSpeed" class="sliderwrap il">
 					<input id="sliderSpeed" class="noslide" onchange="setSpeed()" oninput="updateTrail(this)" max="255" min="0" type="range" value="128" />
 					<div class="sliderdisplay"></div>
 				</div>
@@ -258,7 +348,7 @@
 	</div>
 
 	<div id="Segments" class="tabcontent">
-		<p class="labels hd" id="segLabel">段</p>
+		<p class="labels hd" id="segLabel" data-i18n="tabLabelSegment">段</p>
 		<div id="segcont">
 			正在加载...
 		</div>
@@ -296,7 +386,7 @@
 	<div id="Presets" class="tabcontent">
 		<div id="pql">
 		</div>
-		<p class="labels hd">预设</p>
+		<p class="labels hd" data-i18n="tabLabelPreset">预设</p>
 		<div class="staytop fnd" id="psFind">
 			<input type="text" placeholder="搜索" oninput="search(this,'pcont')" onfocus="search(this,'pcont')" />
 			<i class="icons clear-icon" onclick="clean(this);">&#xe38f;</i>
@@ -311,10 +401,10 @@
 </div>
 
 <div class="tab bot" id="bot">
-	<button class="tablinks" onclick="openTab(0)"><i class="icons">&#xe2b3;</i><p class="tab-label">颜色</p></button>
-	<button class="tablinks" onclick="openTab(1)"><i class="icons">&#xe23d;</i><p class="tab-label">效果</p></button>
-	<button class="tablinks" onclick="openTab(2)"><i class="icons">&#xe34b;</i><p class="tab-label">段</p></button>
-	<button class="tablinks" onclick="openTab(3)"><i class="icons">&#xe04c;</i><p class="tab-label">预设</p></button>
+	<button class="tablinks" onclick="openTab(0)"><i class="icons">&#xe2b3;</i><p class="tab-label" data-i18n="tabLabelColor">颜色</p></button>
+	<button class="tablinks" onclick="openTab(1)"><i class="icons">&#xe23d;</i><p class="tab-label" data-i18n="tabLabelEffect">效果</p></button>
+	<button class="tablinks" onclick="openTab(2)"><i class="icons">&#xe34b;</i><p class="tab-label" data-i18n="tabLabelSegment">段</p></button>
+	<button class="tablinks" onclick="openTab(3)"><i class="icons">&#xe04c;</i><p class="tab-label" data-i18n="tabLabelPreset">预设</p></button>
 </div>
 
 <div id="connind"></div>

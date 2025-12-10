@@ -213,18 +213,27 @@ public:
   }
 
   void addToJsonState(JsonObject& root) override {
-    if (!initDone || !enabled) return;
+    if (!initDone) return;
 
     JsonObject usermod = root[FPSTR(_name)];
     if (usermod.isNull()) usermod = root.createNestedObject(FPSTR(_name));
     
     usermod["enabled"] = enabled;
-    usermod["progress"] = progressPercent;
-    usermod["entity"] = entityId;
-    usermod["use-multi-color"] = useMultiColor;
-    usermod["use-uniform-color"] = useUniformColor;
-    if (strlen(errorMessage) > 0) {
-      usermod["error"] = errorMessage;
+    // 即使未启用，也返回基本信息，以便前端可以显示
+    if (enabled) {
+      usermod["progress"] = progressPercent;
+      usermod["entity"] = entityId;
+      usermod["use-multi-color"] = useMultiColor;
+      usermod["use-uniform-color"] = useUniformColor;
+      if (strlen(errorMessage) > 0) {
+        usermod["error"] = errorMessage;
+      }
+    } else {
+      // 未启用时，返回默认值以便前端显示
+      usermod["progress"] = 0;
+      usermod["entity"] = entityId;
+      usermod["use-multi-color"] = false;
+      usermod["use-uniform-color"] = false;
     }
   }
 

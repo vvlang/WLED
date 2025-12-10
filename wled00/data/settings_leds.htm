@@ -28,6 +28,10 @@
 		function toNum(c)  { let n=c.charCodeAt(0); return (n>=48 && n<=57)?n-48:(n>=65 && n<=90)?n-55:0; } // convert char (0-9A-Z) to number (0-35)
 		function S() {
 			getLoc();
+			// 初始化语言切换按钮
+			initLangToggle();
+			// 应用翻译
+			applyTranslations();
 			loadJS(getURL('/settings/s.js?p=2'), false, ()=>{
 				d.ledTypes = [/*{i:22,c:1,t:"D",n:"WS2812"},{i:42,c:6,t:"AA",n:"PWM CCT"}*/]; // filled from GetV()
 				d.um_p = [];
@@ -852,9 +856,11 @@ Swap: <select id="xw${s}" name="XW${s}">
 	<form id="form_s" name="Sf" method="post">
 		<div class="toprow">
 		<div class="helpB"><button type="button" onclick="H('features/settings/#led-settings')">?</button></div>
-		<button type="button" onclick="B()">返回</button><button type="submit">保存</button><hr>
+		<button type="button" onclick="B()" data-i18n="back">返回</button><button type="submit" data-i18n="save">保存</button>
+		<button type="button" id="langToggle" onclick="toggleLanguage()" style="background: rgba(255,255,255,0.1); border: none; color: var(--c-t); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 8px;">EN</button>
+		<hr>
 		</div>
-		<h2>LED 与硬件设置</h2>
+		<h2 data-i18n="ledSettingsTitle">LED 与硬件设置</h2>
 		总LED数: <span id="lc">?</span> <span id="pc"></span><br>
 		<i>最亮白色推荐电源:</i><br>
 		<b><span id="psu">?</span></b><br>
@@ -986,7 +992,7 @@ Swap: <select id="xw${s}" name="XW${s}">
 		<hr class="sml">
 		<div id="cfg">配置模板: <input type="file" name="data2" accept=".json"><button type="button" class="sml" onclick="loadCfg(d.Sf.data2)">应用</button><br></div>
 		<hr>
-		<button type="button" onclick="B()">返回</button><button type="submit">保存</button>
+		<button type="button" onclick="B()" data-i18n="back">返回</button><button type="submit" data-i18n="save">保存</button>
 	</form>
 	<div id="toast"></div>
 </body>

@@ -34,6 +34,10 @@
 	}
 	function S(){
 		getLoc();
+		// 初始化语言切换按钮
+		initLangToggle();
+		// 应用翻译
+		applyTranslations();
 		loadJS(getURL('/settings/s.js?p=7'), false, ()=>{GCH(15);}, ()=>{mMap();}); // If we set async false, file is loaded and executed, then next statement is processed
 		if (loc) d.Sf.action = getURL('/settings/dmx');
 	}
@@ -44,9 +48,11 @@
 <form id="form_s" name="Sf" method="post">
 <div class="toprow">
 <div class="helpB"><button type="button" onclick="HW()">?</button></div>
-<button type="button" onclick="B()">返回</button><button type="submit">保存</button><hr>
-</div>
-<h2>DMX 输出设置</h2>
+	<button type="button" onclick="B()" data-i18n="back">返回</button><button type="submit" data-i18n="save">保存</button>
+	<button type="button" id="langToggle" onclick="toggleLanguage()" style="background: rgba(255,255,255,0.1); border: none; color: var(--c-t); padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-left: 8px;">EN</button>
+	<hr>
+	</div>
+	<h2 data-i18n="dmxOutput">DMX 输出设置</h2>
 
 代理宇宙 <input name=PU type=number min=0 max=63999 required> 从 E1.31 到 DMX (0=禁用)<br>
 <i>这将禁用下面可配置的LED数据输出到DMX</i><br><br>
